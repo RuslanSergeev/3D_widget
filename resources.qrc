@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>vertex_shader.vert</file>
+        <file>fragment_shader.frag</file>
+    </qresource>
+    <qresource prefix="/textures">
+        <file>container.jpg</file>
+    </qresource>
+</RCC>
