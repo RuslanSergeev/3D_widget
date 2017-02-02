@@ -50,16 +50,16 @@ OBJECTS_DIR   = ./
 
 SOURCES       = main.cpp \
 		SX_3D_Widget.cpp \
-		SX_3D_Client.cpp moc_SX_3D_Widget.cpp \
+		SX_3D_Client.cpp qrc_resources.cpp \
+		moc_SX_3D_Widget.cpp \
 		moc_SX_3D_Client.cpp
 OBJECTS       = main.o \
 		SX_3D_Widget.o \
 		SX_3D_Client.o \
+		qrc_resources.o \
 		moc_SX_3D_Widget.o \
 		moc_SX_3D_Client.o
-DIST          = vertex_shader.vert \
-		fragment_shader.frag \
-		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
+DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/sanitize.conf \
@@ -100,6 +100,7 @@ DIST          = vertex_shader.vert \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
@@ -190,6 +191,7 @@ Makefile: SX_3D_Widget.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qm
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
@@ -205,7 +207,8 @@ Makefile: SX_3D_Widget.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qm
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exceptions.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
-		SX_3D_Widget.pro
+		SX_3D_Widget.pro \
+		resources.qrc
 	$(QMAKE) -o Makefile SX_3D_Widget.pro
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf:
@@ -248,6 +251,7 @@ Makefile: SX_3D_Widget.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qm
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt_config.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qmake.conf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exclusive_builds.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_pre.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf:
@@ -264,6 +268,7 @@ Makefile: SX_3D_Widget.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qm
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf:
 SX_3D_Widget.pro:
+resources.qrc:
 qmake: FORCE
 	@$(QMAKE) -o Makefile SX_3D_Widget.pro
 
@@ -278,6 +283,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
+	$(COPY_FILE) --parents resources.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents SX_3D_Widget.h SX_3D_Client.h $(DISTDIR)/
 	$(COPY_FILE) --parents main.cpp SX_3D_Widget.cpp SX_3D_Client.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents SX_3D_Client.ui $(DISTDIR)/
@@ -290,6 +296,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) $(TARGET) 
+	-$(DEL_FILE) .qmake.stash
 	-$(DEL_FILE) Makefile
 
 
@@ -301,8 +308,15 @@ mocables: compiler_moc_header_make_all compiler_moc_source_make_all
 
 check: first
 
-compiler_rcc_make_all:
+compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
+	-$(DEL_FILE) qrc_resources.cpp
+qrc_resources.cpp: resources.qrc \
+		fragment_shader.frag \
+		vertex_shader.vert \
+		container.jpg
+	/usr/lib/x86_64-linux-gnu/qt5/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
+
 compiler_moc_header_make_all: moc_SX_3D_Widget.cpp moc_SX_3D_Client.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc_SX_3D_Widget.cpp moc_SX_3D_Client.cpp
@@ -327,7 +341,7 @@ compiler_yacc_impl_make_all:
 compiler_yacc_impl_clean:
 compiler_lex_make_all:
 compiler_lex_clean:
-compiler_clean: compiler_moc_header_clean compiler_uic_clean 
+compiler_clean: compiler_rcc_clean compiler_moc_header_clean compiler_uic_clean 
 
 ####### Compile
 
@@ -339,8 +353,12 @@ SX_3D_Widget.o: SX_3D_Widget.cpp SX_3D_Widget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SX_3D_Widget.o SX_3D_Widget.cpp
 
 SX_3D_Client.o: SX_3D_Client.cpp SX_3D_Client.h \
-		ui_SX_3D_Client.h
+		ui_SX_3D_Client.h \
+		SX_3D_Widget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SX_3D_Client.o SX_3D_Client.cpp
+
+qrc_resources.o: qrc_resources.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_resources.o qrc_resources.cpp
 
 moc_SX_3D_Widget.o: moc_SX_3D_Widget.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_SX_3D_Widget.o moc_SX_3D_Widget.cpp

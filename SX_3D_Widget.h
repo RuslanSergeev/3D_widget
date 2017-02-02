@@ -3,17 +3,18 @@
 
 #include <QOpenGLWidget>
 
-class QOpenGLFunctions;
-class QOpenGLShaderProgram;
-class QOpenGLTexture;
-class QOpenGLBuffer;
-class QOpenGLVertexArrayObject;
+#include <QOpenGLFunctions>
+#include <QOpenGLShaderProgram>
+#include <QOpenGLTexture>
+#include <QOpenGLBuffer>
+#include <QOpenGLVertexArrayObject>
+#include <QTimer>
 
 class SX_3D_Widget : public QOpenGLWidget
 {
     Q_OBJECT
 public:
-    SX_3D_Widget();
+    //    SX_3D_Widget();
     SX_3D_Widget(QWidget *parent = 0);
 protected:
     virtual void initializeGL();
@@ -29,6 +30,8 @@ private:
     QOpenGLBuffer *vertex_buffer;
     QOpenGLBuffer *index_buffer;
     QOpenGLVertexArrayObject *array_object;
+
+    QTimer *timer;
 };
 
 #endif // SX_3D_WIDGET_H

@@ -30,7 +30,7 @@ public:
     {
         if (SX_3D_Client->objectName().isEmpty())
             SX_3D_Client->setObjectName(QStringLiteral("SX_3D_Client"));
-        SX_3D_Client->resize(709, 495);
+        SX_3D_Client->resize(589, 443);
         gridLayout = new QGridLayout(SX_3D_Client);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
         widget = new SX_3D_Widget(SX_3D_Client);
