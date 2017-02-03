@@ -7,19 +7,34 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
 
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+using glm::vec3;
+using glm::mat4x4;
+using glm::quat;
+//using glm::gtc::matrix_transform;
+
+
 #include "QDebug"
 
 #include <QTimer>
 
 volatile static const GLfloat vertices_data[] = {
-    -0.25f,   0.25f,    0.25f,     0.95f, 0.0f,  0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f,
-    0.25f,   0.25f,    0.25f,      0.0f, 0.95f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
-    0.25f,   0.25f,   -0.25f,     0.25f, 0.0f,  0.95f,           0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
-    -0.25f,   0.25f,   -0.25f,     0.25f, 0.35f, 0.65f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
-    -0.25f,  -0.25f,    0.25f,     0.75f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
-    0.25f,  -0.25f,    0.25f,     0.25f, 0.85f, 0.0f,            0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
-    0.25f,  -0.25f,   -0.25f,      0.9f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
-    -0.25f,  -0.25f,   -0.25f,     0.25f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f
+    -0.25f/*1.0f*/,   0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.95f, 0.0f,  0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f,
+    0.25f/*1.0f*/,   0.25f/*1.0f*/,    0.25f/*1.0f*/,      0.0f, 0.95f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
+    0.25f/*1.0f*/,   0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.0f,  0.95f,           0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
+    -0.25f/*1.0f*/,   0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.35f, 0.65f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
+    -0.25f/*1.0f*/,  -0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.75f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
+    0.25f/*1.0f*/,  -0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.25f, 0.85f, 0.0f,            0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
+    0.25f/*1.0f*/,  -0.25f/*1.0f*/,   -0.25f/*1.0f*/,      0.9f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
+    -0.25f/*1.0f*/,  -0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f
 };
 
 volatile static const GLuint indices_data[] = {
@@ -54,7 +69,7 @@ SX_3D_Widget::SX_3D_Widget(QWidget *parent):
 void SX_3D_Widget::initializeGL()
 {
     gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.31f, 0.1f, 0.45f, 1.0f);
+    gl->glClearColor(0.05f, 0.13f, 0.15f, 1.0f);
     gl->glEnable(GL_DEPTH_TEST);
     gl->glEnable(GL_MULTISAMPLE);
 
@@ -149,12 +164,12 @@ void SX_3D_Widget::initializeGL()
 
 void SX_3D_Widget::resizeGL(int __width, int __height)
 {
-    /*  gl->*/glViewport(0, 0, __width, __height);
+    gl->glViewport(0, 0, __width, __height);
 }
 
 void SX_3D_Widget::paintGL()
 {
-    /*gl->*/glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+    gl->glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
     program->bind();
     array_object->bind();
@@ -165,10 +180,13 @@ void SX_3D_Widget::paintGL()
     static float angle = 0;
     angle += 0.5;
 
-    QMatrix4x4 MVP;
-    MVP.translate(0, 0, 0);
-    MVP.rotate(angle, 1/sqrt(3), -1/sqrt(3), 1/sqrt(3));
-    program->setUniformValue("model_view_projection_matrix", MVP);
+    mat4x4 mvp;
+    mvp = glm::perspective(45.0f, width()*1.0f/height(), 0.01f, 6.0f)
+            *glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f))
+            *glm::translate(mat4x4(), vec3(0, 0, 2*cos(glm::radians(angle))))*glm::rotate(mat4x4(), glm::radians(angle), glm::vec3(1.0f, 0.0f, 1.0f));
+
+
+    gl->glUniformMatrix4fv(program->uniformLocation("model_view_projection_matrix"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     gl->glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     program->release();

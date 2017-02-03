@@ -27,3 +27,6 @@ DISTFILES +=
 
 RESOURCES += \
     resources.qrc
+
+INCLUDEPATH += $$PWD/../../../../opt/LIBRARYES/glm
+DEPENDPATH += $$PWD/../../../../opt/LIBRARYES/glm
