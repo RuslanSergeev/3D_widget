@@ -18,7 +18,11 @@ SOURCES += main.cpp \
 
 HEADERS  += \
     SX_3D_Widget.h \
-    SX_3D_Client.h
+    SX_3D_Client.h \
+    SX_Model.hpp \
+    SX_Camera.hpp \
+    SX_Mesh.hpp \
+    SX_Attributes.hpp
 
 FORMS    += \
     SX_3D_Client.ui
@@ -30,3 +34,5 @@ RESOURCES += \
 
 INCLUDEPATH += $$PWD/../../../../opt/LIBRARYES/glm
 DEPENDPATH += $$PWD/../../../../opt/LIBRARYES/glm
+
+unix:!macx: LIBS += -lassimp

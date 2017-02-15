@@ -15,7 +15,7 @@ CXX           = g++
 DEFINES       = -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 CXXFLAGS      = -m64 -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-INCPATH       = -I. -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtOpenGL -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64
+INCPATH       = -I. -I/opt/LIBRARYES/glm -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtOpenGL -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64
 QMAKE         = /usr/lib/x86_64-linux-gnu/qt5/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -117,7 +117,9 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		SX_3D_Widget.pro SX_3D_Widget.h \
-		SX_3D_Client.h main.cpp \
+		SX_3D_Client.h \
+		SX_Model.hpp \
+		SX_Camera.hpp main.cpp \
 		SX_3D_Widget.cpp \
 		SX_3D_Client.cpp
 QMAKE_TARGET  = SX_3D_Widget
@@ -284,7 +286,7 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents resources.qrc $(DISTDIR)/
-	$(COPY_FILE) --parents SX_3D_Widget.h SX_3D_Client.h $(DISTDIR)/
+	$(COPY_FILE) --parents SX_3D_Widget.h SX_3D_Client.h SX_Model.hpp SX_Camera.hpp $(DISTDIR)/
 	$(COPY_FILE) --parents main.cpp SX_3D_Widget.cpp SX_3D_Client.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents SX_3D_Client.ui $(DISTDIR)/
 
@@ -313,18 +315,20 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: resources.qrc \
 		fragment_shader.frag \
+		wire_fragment.frag \
 		vertex_shader.vert \
-		container.jpg
+		container.jpg \
+		Bdot.jpg
 	/usr/lib/x86_64-linux-gnu/qt5/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_SX_3D_Widget.cpp moc_SX_3D_Client.cpp
 compiler_moc_header_clean:
 	-$(DEL_FILE) moc_SX_3D_Widget.cpp moc_SX_3D_Client.cpp
 moc_SX_3D_Widget.cpp: SX_3D_Widget.h
-	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/ruslan/QtProjects/SX_3D_Widget -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include SX_3D_Widget.h -o moc_SX_3D_Widget.cpp
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/ruslan/QtProjects/SX_3D_Widget -I/opt/LIBRARYES/glm -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include SX_3D_Widget.h -o moc_SX_3D_Widget.cpp
 
 moc_SX_3D_Client.cpp: SX_3D_Client.h
-	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/ruslan/QtProjects/SX_3D_Widget -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include SX_3D_Client.h -o moc_SX_3D_Client.cpp
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/ruslan/QtProjects/SX_3D_Widget -I/opt/LIBRARYES/glm -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include SX_3D_Client.h -o moc_SX_3D_Client.cpp
 
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
@@ -349,7 +353,116 @@ main.o: main.cpp SX_3D_Client.h \
 		SX_3D_Widget.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
-SX_3D_Widget.o: SX_3D_Widget.cpp SX_3D_Widget.h
+SX_3D_Widget.o: SX_3D_Widget.cpp SX_3D_Widget.h \
+		SX_Camera.hpp \
+		SX_Model.hpp \
+		/opt/LIBRARYES/glm/glm/glm.hpp \
+		/opt/LIBRARYES/glm/glm/detail/_fixes.hpp \
+		/opt/LIBRARYES/glm/glm/fwd.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_int.hpp \
+		/opt/LIBRARYES/glm/glm/detail/setup.hpp \
+		/opt/LIBRARYES/glm/glm/simd/platform.h \
+		/opt/LIBRARYES/glm/glm/detail/type_float.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec.hpp \
+		/opt/LIBRARYES/glm/glm/detail/precision.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat.hpp \
+		/opt/LIBRARYES/glm/glm/vec2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/_swizzle.hpp \
+		/opt/LIBRARYES/glm/glm/detail/_swizzle_func.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec2.inl \
+		/opt/LIBRARYES/glm/glm/vec3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec3.inl \
+		/opt/LIBRARYES/glm/glm/vec4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec4.inl \
+		/opt/LIBRARYES/glm/glm/detail/type_vec4_simd.inl \
+		/opt/LIBRARYES/glm/glm/mat2x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x2.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_matrix.hpp \
+		/opt/LIBRARYES/glm/glm/mat2x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x3.inl \
+		/opt/LIBRARYES/glm/glm/mat2x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat2x4.inl \
+		/opt/LIBRARYES/glm/glm/mat3x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x2.inl \
+		/opt/LIBRARYES/glm/glm/mat3x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x3.inl \
+		/opt/LIBRARYES/glm/glm/mat3x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat3x4.inl \
+		/opt/LIBRARYES/glm/glm/mat4x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x2.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x2.inl \
+		/opt/LIBRARYES/glm/glm/mat4x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x3.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x3.inl \
+		/opt/LIBRARYES/glm/glm/mat4x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x4.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x4.inl \
+		/opt/LIBRARYES/glm/glm/detail/type_mat4x4_simd.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_matrix.inl \
+		/opt/LIBRARYES/glm/glm/geometric.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_geometric.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_geometric.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_exponential.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec1.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_vec1.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_exponential.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_vector_relational.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_vector_relational.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_vector_relational_simd.inl \
+		/opt/LIBRARYES/glm/glm/detail/_vectorize.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_exponential_simd.inl \
+		/opt/LIBRARYES/glm/glm/simd/exponential.h \
+		/opt/LIBRARYES/glm/glm/detail/func_common.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_common.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_common_simd.inl \
+		/opt/LIBRARYES/glm/glm/simd/common.h \
+		/opt/LIBRARYES/glm/glm/detail/func_geometric_simd.inl \
+		/opt/LIBRARYES/glm/glm/simd/geometric.h \
+		/opt/LIBRARYES/glm/glm/detail/func_matrix_simd.inl \
+		/opt/LIBRARYES/glm/glm/simd/matrix.h \
+		/opt/LIBRARYES/glm/glm/trigonometric.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_trigonometric.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_trigonometric.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_trigonometric_simd.inl \
+		/opt/LIBRARYES/glm/glm/exponential.hpp \
+		/opt/LIBRARYES/glm/glm/common.hpp \
+		/opt/LIBRARYES/glm/glm/packing.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_packing.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_packing.inl \
+		/opt/LIBRARYES/glm/glm/detail/type_half.hpp \
+		/opt/LIBRARYES/glm/glm/detail/type_half.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_packing_simd.inl \
+		/opt/LIBRARYES/glm/glm/matrix.hpp \
+		/opt/LIBRARYES/glm/glm/vector_relational.hpp \
+		/opt/LIBRARYES/glm/glm/integer.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_integer.hpp \
+		/opt/LIBRARYES/glm/glm/detail/func_integer.inl \
+		/opt/LIBRARYES/glm/glm/detail/func_integer_simd.inl \
+		/opt/LIBRARYES/glm/glm/simd/integer.h \
+		/opt/LIBRARYES/glm/glm/gtc/matrix_transform.hpp \
+		/opt/LIBRARYES/glm/glm/gtc/constants.hpp \
+		/opt/LIBRARYES/glm/glm/gtc/constants.inl \
+		/opt/LIBRARYES/glm/glm/gtc/matrix_transform.inl \
+		/opt/LIBRARYES/glm/glm/gtx/quaternion.hpp \
+		/opt/LIBRARYES/glm/glm/gtc/quaternion.hpp \
+		/opt/LIBRARYES/glm/glm/gtx/quaternion.inl \
+		/opt/LIBRARYES/glm/glm/gtx/norm.hpp \
+		/opt/LIBRARYES/glm/glm/gtx/norm.inl \
+		/opt/LIBRARYES/glm/glm/gtx/euler_angles.hpp \
+		/opt/LIBRARYES/glm/glm/gtx/euler_angles.inl \
+		/opt/LIBRARYES/glm/glm/gtx/compatibility.hpp \
+		/opt/LIBRARYES/glm/glm/gtx/compatibility.inl \
+		/opt/LIBRARYES/glm/glm/gtc/type_ptr.hpp \
+		/opt/LIBRARYES/glm/glm/gtc/type_ptr.inl
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SX_3D_Widget.o SX_3D_Widget.cpp
 
 SX_3D_Client.o: SX_3D_Client.cpp SX_3D_Client.h \

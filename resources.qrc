@@ -2,8 +2,14 @@
     <qresource prefix="/shaders">
         <file>vertex_shader.vert</file>
         <file>fragment_shader.frag</file>
+        <file>wire_fragment.frag</file>
     </qresource>
     <qresource prefix="/textures">
         <file>container.jpg</file>
+        <file>Bdot.jpg</file>
+        <file>skybox.jpg</file>
+    </qresource>
+    <qresource prefix="/models">
+        <file>teapot.obj</file>
     </qresource>
 </RCC>

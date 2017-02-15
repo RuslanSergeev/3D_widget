@@ -6,6 +6,11 @@
 #include <QOpenGLTexture>
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
+#include <QTimer>
+#include <QDebug>
+
+#include <SX_Camera.hpp>
+#include <SX_Model.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
@@ -19,46 +24,13 @@
 using glm::vec3;
 using glm::mat4x4;
 using glm::quat;
-//using glm::gtc::matrix_transform;
 
+SX_Model *sx_model;//, *wire_box;
+SX_Camera *sx_camera;
+SX_Mesh *sx_mesh;
 
-#include "QDebug"
-
-#include <QTimer>
-
-volatile static const GLfloat vertices_data[] = {
-    -0.25f/*1.0f*/,   0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.95f, 0.0f,  0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f,
-    0.25f/*1.0f*/,   0.25f/*1.0f*/,    0.25f/*1.0f*/,      0.0f, 0.95f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
-    0.25f/*1.0f*/,   0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.0f,  0.95f,           0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
-    -0.25f/*1.0f*/,   0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.35f, 0.65f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
-    -0.25f/*1.0f*/,  -0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.75f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 1.0f,
-    0.25f/*1.0f*/,  -0.25f/*1.0f*/,    0.25f/*1.0f*/,     0.25f, 0.85f, 0.0f,            0.0f, 0.0f, 0.99f,      1.0f, 1.0f,
-    0.25f/*1.0f*/,  -0.25f/*1.0f*/,   -0.25f/*1.0f*/,      0.9f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      1.0f, 0.0f,
-    -0.25f/*1.0f*/,  -0.25f/*1.0f*/,   -0.25f/*1.0f*/,     0.25f, 0.25f, 0.25f,           0.0f, 0.0f, 0.99f,      0.0f, 0.0f
-};
-
-volatile static const GLuint indices_data[] = {
-
-    0, 2, 3,
-    0, 1, 2,
-
-    2, 6, 3,
-    3, 6, 7,
-
-
-
-    6, 4, 5,
-    4, 7, 6,
-
-    1, 5, 2,
-    2, 5, 6,
-
-    3, 7, 4,
-    3, 4, 0,
-
-    0, 4, 1,
-    1, 4, 5
-};
+//SX_Camera *wire_camera;
+//SX_Model *arrow;
 
 SX_3D_Widget::SX_3D_Widget(QWidget *parent):
     QOpenGLWidget(parent)
@@ -68,94 +40,126 @@ SX_3D_Widget::SX_3D_Widget(QWidget *parent):
 
 void SX_3D_Widget::initializeGL()
 {
-    gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.05f, 0.13f, 0.15f, 1.0f);
-    gl->glEnable(GL_DEPTH_TEST);
-    gl->glEnable(GL_MULTISAMPLE);
-
-    program = new QOpenGLShaderProgram;
-
-    if(!program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertex_shader.vert"))
-    {
-        qDebug() << "Unable to add vertex shader:";
-        qDebug() << program->log();
-        close();
-    }
-    else if(!program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragment_shader.frag"))
-    {
-        qDebug() << "Unable to add fragment shader:";
-        qDebug() << program->log();
-        close();
-    }
-    else if(!program->link())
-    {
-        qDebug() << "Unable to link shader program:";
-        qDebug() << program->log();
-        close();
-    }
-    else
-    {
-        qDebug() << "shader programm succesfully linked.";
-    }
-
-    if(!program->bind()){
-        qDebug() << "cannot bind current programm";
-    }
-
-    texture = new QOpenGLTexture(QImage(":/textures/container.jpg"));
-    texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    texture->setWrapMode(QOpenGLTexture::Repeat);
-
-    program->setUniformValue("texture0", 1);
 
 
+    sx_camera = new SX_Camera(":/shaders/vertex_shader.vert", ":/shaders/fragment_shader.frag");
+
+    sx_mesh = new SX_Mesh;
+    sx_mesh->add_texture(":/textures/container.jpg", "texture0");
+    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+    sx_mesh->add_index(0);sx_mesh->add_index(2);sx_mesh->add_index(3);
+    sx_mesh->add_index(0);sx_mesh->add_index(1);sx_mesh->add_index(2);
+    sx_mesh->add_index(2);sx_mesh->add_index(6);sx_mesh->add_index(3);
+    sx_mesh->add_index(3);sx_mesh->add_index(6);sx_mesh->add_index(7);
+    sx_mesh->add_index(6);sx_mesh->add_index(4);sx_mesh->add_index(5);
+    sx_mesh->add_index(4);sx_mesh->add_index(7);sx_mesh->add_index(6);
+    sx_mesh->add_index(0);sx_mesh->add_index(4);sx_mesh->add_index(1);
+    sx_mesh->add_index(1);sx_mesh->add_index(4);sx_mesh->add_index(5);
+    sx_mesh->add_index(8);sx_mesh->add_index(9);sx_mesh->add_index(10);
+    sx_mesh->add_index(11);sx_mesh->add_index(9);sx_mesh->add_index(8);
+    sx_mesh->add_index(12);sx_mesh->add_index(13);sx_mesh->add_index(14);
+    sx_mesh->add_index(12);sx_mesh->add_index(14);sx_mesh->add_index(15);
+
+    sx_model = new SX_Model;
+    sx_model->add_mesh(*sx_mesh);
+
+    sx_camera->add_model(*sx_model);
+
+//    sx_model = new SX_Model(GL_TRIANGLES);
+//    sx_model->add_texture(":/textures/container.jpg", "texture0");
+//    sx_model->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    sx_model->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    sx_model->add_index(0);sx_model->add_index(2);sx_model->add_index(3);
+//    sx_model->add_index(0);sx_model->add_index(1);sx_model->add_index(2);
+//    sx_model->add_index(2);sx_model->add_index(6);sx_model->add_index(3);
+//    sx_model->add_index(3);sx_model->add_index(6);sx_model->add_index(7);
+//    sx_model->add_index(6);sx_model->add_index(4);sx_model->add_index(5);
+//    sx_model->add_index(4);sx_model->add_index(7);sx_model->add_index(6);
+//    sx_model->add_index(0);sx_model->add_index(4);sx_model->add_index(1);
+//    sx_model->add_index(1);sx_model->add_index(4);sx_model->add_index(5);
+//    sx_model->add_index(8);sx_model->add_index(9);sx_model->add_index(10);
+//    sx_model->add_index(11);sx_model->add_index(9);sx_model->add_index(8);
+//    sx_model->add_index(12);sx_model->add_index(13);sx_model->add_index(14);
+//    sx_model->add_index(12);sx_model->add_index(14);sx_model->add_index(15);
+
+//    sx_camera->add_model(sx_model);
 
 
-    array_object = new QOpenGLVertexArrayObject;
-    array_object->create();
-    array_object->bind();
+//    wire_camera = new SX_Camera(":/shaders/vertex_shader.vert", ":/shaders/wire_fragment.frag");
 
-    vertex_buffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-    vertex_buffer->create();
-    vertex_buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
+//    arrow = new SX_Model(GL_LINES);
+//    arrow->add_point({glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    arrow->add_point({glm::vec3(0.0f, 0.0f, 0.5f), glm::vec3(0.99f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    arrow->add_point({glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.0f, 0.99f, 0.0f), glm::vec3(0.0f, 0.99f, 0.0f), glm::vec2(0.0f, 0.0f)});
+//    arrow->add_point({glm::vec3(0.5f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec3(0.99f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)});
+//    arrow->add_index(0);arrow->add_index(1);
+//    arrow->add_index(0);arrow->add_index(2);
+//    arrow->add_index(0);arrow->add_index(3);
 
-    index_buffer = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    index_buffer->create();
-    index_buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
+//    wire_camera->add_model(arrow);
+//    wire_camera->set_viewport(0, height() - 175, 175, 175);
 
+//    wire_box = new SX_Model(GL_LINES);
+//    wire_box->add_texture(":/textures/container.jpg", "texture0");
+//    wire_box->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
+//    wire_box->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+//    wire_box->add_index(0);wire_box->add_index(2);wire_box->add_index(3);
+//    wire_box->add_index(0);wire_box->add_index(1);wire_box->add_index(2);
+//    wire_box->add_index(2);wire_box->add_index(6);wire_box->add_index(3);
+//    wire_box->add_index(3);wire_box->add_index(6);wire_box->add_index(7);
+//    wire_box->add_index(6);wire_box->add_index(4);wire_box->add_index(5);
+//    wire_box->add_index(4);wire_box->add_index(7);wire_box->add_index(6);
+//    wire_box->add_index(0);wire_box->add_index(4);wire_box->add_index(1);
+//    wire_box->add_index(1);wire_box->add_index(4);wire_box->add_index(5);
+//    wire_box->add_index(8);wire_box->add_index(9);wire_box->add_index(10);
+//    wire_box->add_index(11);wire_box->add_index(9);wire_box->add_index(8);
+//    wire_box->add_index(12);wire_box->add_index(13);wire_box->add_index(14);
+//    wire_box->add_index(12);wire_box->add_index(14);wire_box->add_index(15);
 
-    vertex_buffer->bind();
-    vertex_buffer->allocate((const void *)vertices_data, sizeof(vertices_data));
-
-
-
-    program->setAttributeBuffer("vertex_position", GL_FLOAT, 0*sizeof(float), 3, 11*sizeof(float));
-    program->enableAttributeArray("vertex_position");
-
-    program->setAttributeBuffer("vertex_color", GL_FLOAT, 3*sizeof(float), 3, 11*sizeof(float));
-    program->enableAttributeArray("vertex_color");
-
-
-    program->setAttributeBuffer("vertex_normal", GL_FLOAT, 6*sizeof(float), 3, 11*sizeof(float));
-    program->enableAttributeArray("vertex_normal");
-
-    program->setAttributeBuffer("vertex_texture_coordinates", GL_FLOAT, 9*sizeof(float), 2, 11*sizeof(float));
-    program->enableAttributeArray("vertex_texture_coordinates");
-
-
-
-
-    index_buffer->bind();
-    index_buffer->allocate((const void *)indices_data, sizeof(indices_data));
-
-
-
-
-    array_object->release();
-    vertex_buffer->release();
-    index_buffer->release();
-    program->release();
+//    wire_camera->add_model(wire_box);
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -164,32 +168,32 @@ void SX_3D_Widget::initializeGL()
 
 void SX_3D_Widget::resizeGL(int __width, int __height)
 {
-    gl->glViewport(0, 0, __width, __height);
+//    sx_camera->set_viewport(0, 0, __width, __height);
 }
 
 void SX_3D_Widget::paintGL()
 {
-    gl->glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
-    program->bind();
-    array_object->bind();
+//    static float angle = 0;
+//    angle += 0.5;
 
-    glActiveTexture(GL_TEXTURE1);
-    texture->bind();
+//    mat4x4 mvp;
+//    mvp = glm::perspective(45.0f, width()*1.0f/height(), 0.005f, 6.0f)
+//            *glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f))
+//            *glm::translate(mat4x4(), vec3(0, 0, 2*cos(glm::radians(angle))))
+//            *glm::rotate(mat4x4(), glm::radians(angle), glm::vec3(1.0f, 0.0f, 1.0f));
 
-    static float angle = 0;
-    angle += 0.5;
+//    glEnable(GL_DEPTH_TEST);
 
-    mat4x4 mvp;
-    mvp = glm::perspective(45.0f, width()*1.0f/height(), 0.01f, 6.0f)
-            *glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f))
-            *glm::translate(mat4x4(), vec3(0, 0, 2*cos(glm::radians(angle))))*glm::rotate(mat4x4(), glm::radians(angle), glm::vec3(1.0f, 0.0f, 1.0f));
+//    sx_camera->get_model(0)->set_model_view_projection(mvp);
+//    sx_camera->repaint();
 
+//    glDisable(GL_DEPTH_TEST);
 
-    gl->glUniformMatrix4fv(program->uniformLocation("model_view_projection_matrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+//    wire_camera->get_model(0)->set_model_view_projection(mvp);
+//    wire_camera->get_model(1)->set_model_view_projection(mvp);
+//    wire_camera->repaint();
 
-    gl->glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    program->release();
 }
 
 
