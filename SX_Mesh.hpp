@@ -137,9 +137,10 @@ public:
 
     bool set_program(QOpenGLShaderProgram *OpenGLProgram)
     {
-        if(nullptr != OpenGLProgram && OpenGLProgram->isLinked())
+        if((nullptr != OpenGLProgram) && (OpenGLProgram->isLinked()))
         {
             program = OpenGLProgram;
+            return true;
         }
         return false;
     }
@@ -217,8 +218,8 @@ private:
         ElementBufferObject->destroy();
     }
 
-    QOpenGLFunctions *gl_functions;
-    QOpenGLShaderProgram *program;
+    QOpenGLFunctions *gl_functions = nullptr;
+    QOpenGLShaderProgram *program = nullptr;
 
     mesh_status_type status = mesh_buffers_not_ready;
     mesh_data_descriptor mesh_data;
