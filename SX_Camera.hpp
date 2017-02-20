@@ -39,16 +39,17 @@ typedef struct camera_descriptor_
 
 static const camera_descriptor standard_camera =
 {
-    .camera_location = glm::vec3(0.0f, 0.0f, 3.0f),
+
+    .camera_location = glm::vec3(0.0f, 0.0f, 1.0f),
     .camera_target = glm::vec3(0.0f, 0.0f, 0.0f),
     .camera_up = glm::vec3(0.0f, 1.0f, 0.0f),
-    .frustum_near = 1.0e-2f,
-    .frustum_far = 10.0f,
-    .frustum_field_of_view = 15.0f,
+    .frustum_near = 1.0e-3,
+    .frustum_far = 1.0f,
+    .frustum_field_of_view = 45.0f,
     .aspect_ratio = 800.0f/600.0f
 };
 
-class SX_Camera : public SX_Drawable
+class SX_Camera
 {
 public:
 
@@ -58,6 +59,9 @@ public:
               camera_descriptor cam_descriptor_param = standard_camera,
               const size_t max_number_of_models = 100)
     {
+
+        responsible_drawable = new SX_Drawable;
+
         QOpenGLShaderProgram *new_program = new QOpenGLShaderProgram;
 
         if(!new_program->addShaderFromSourceFile(QOpenGLShader::Vertex, VertexShaderFilename))
@@ -82,6 +86,7 @@ public:
 
         new_program->create();
         set_program(new_program);
+        configure_attributes_locations();
 
 
         QOpenGLFunctions *gl_functions = QOpenGLContext::currentContext()->functions();
@@ -92,7 +97,7 @@ public:
 
         set_camera_descriptor(cam_descriptor_param);
 
-        primitive_type = new_primitive_type;
+        responsible_drawable->primitive_type = new_primitive_type;
 
         set_viewport(screen_viewport);
         models.reserve(max_number_of_models);
@@ -106,13 +111,18 @@ public:
     */
     bool configure_attributes_locations()
     {
-        if(nullptr != program && program->isLinked())
+        if(nullptr != responsible_drawable->program && responsible_drawable->program->isLinked())
         {
-            attributes_locations.color_location = program->attributeLocation(color_attribute_name);
-            attributes_locations.model_matrix_location = program->uniformLocation(model_matrix_uniform_name);
-            attributes_locations.normal_location = program->attributeLocation(normal_attribute_name);
-            attributes_locations.position_location = program->attributeLocation(position_attribute_name);
-            attributes_locations.texture_coordinate_location = program->attributeLocation(texture_coordinate_attribute_name);
+            responsible_drawable->attributes_locations.color_location =
+                    responsible_drawable->program->attributeLocation(color_attribute_name);
+            responsible_drawable->attributes_locations.model_matrix_location =
+                    responsible_drawable->program->uniformLocation(model_matrix_uniform_name);
+            responsible_drawable->attributes_locations.normal_location =
+                    responsible_drawable->program->attributeLocation(normal_attribute_name);
+            responsible_drawable->attributes_locations.position_location =
+                    responsible_drawable->program->attributeLocation(position_attribute_name);
+            responsible_drawable->attributes_locations.texture_coordinate_location =
+                    responsible_drawable->program->attributeLocation(texture_coordinate_attribute_name);
             return true;
         }
         return false;
@@ -120,11 +130,7 @@ public:
 
     bool add_model(SX_Model &new_model)
     {
-//        new_model.set_functions(gl_functions);
-//        new_model.set_program(program);
-//        new_model.set_attributes_locations(attributes_locations);
-
-        new_model.set_responsible_camera(this);
+        new_model.set_responsible_camera(responsible_drawable);
 
         const size_t size = models.size();
         if(size == models.capacity()){
@@ -159,26 +165,21 @@ public:
 
     bool repaint(){
         if(is_ready()){
+            responsible_drawable->program->bind();
 
-
-
-            program->bind();
             configure_attributes_locations();
             update_view_projection_matrix();
 
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glEnable(GL_DEPTH_TEST);
-            glEnable(GL_MULTISAMPLE);
+            responsible_drawable->gl_functions->glEnable(GL_DEPTH_TEST);
+            responsible_drawable->gl_functions->glEnable(GL_MULTISAMPLE);
 
-            glClearColor(0.31f, 0.1f, 0.45f, 1.0);
-            glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+            responsible_drawable->gl_functions->glClearColor(0.31f, 0.1f, 0.45f, 1.0);
+            responsible_drawable->gl_functions->glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
-            gl_functions->glViewport(viewport.origin_x,
+            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
                                      viewport.origin_y,
                                      viewport.width,
                                      viewport.height);
-
-//            gl_functions->glViewport(0.0f, 0.0f, 800.0f, 600.0f);
 
 
             auto current_model = models.begin();
@@ -188,7 +189,7 @@ public:
                 ++current_model;
             }
 
-            program->release();
+            responsible_drawable->program->release();
             return true;
         }
         else
@@ -239,7 +240,7 @@ public:
 
     void update_view_projection_matrix()
     {
-        view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
+        responsible_drawable->view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
                                                   cam_descriptor.aspect_ratio,
                                                   cam_descriptor.frustum_near,
                                                   cam_descriptor.frustum_far)
@@ -252,7 +253,7 @@ public:
     {
         if(is_ready())
         {
-            program->bind();
+            responsible_drawable->program->bind();
             return true;
         }
         else
@@ -266,7 +267,7 @@ public:
     {
         if(is_ready())
         {
-            program->release();
+            responsible_drawable->program->release();
             return true;
         }
         else
@@ -277,7 +278,7 @@ public:
 
     bool is_ready()
     {
-        return program->isLinked() && (nullptr != gl_functions);
+        return responsible_drawable->program->isLinked() && (nullptr != responsible_drawable->gl_functions);
     }
 
 private:
@@ -286,7 +287,7 @@ private:
     {
         if(OpenGLContext)
         {
-            gl_functions = OpenGLContext;
+            responsible_drawable->gl_functions = OpenGLContext;
             return true;
         }
         else
@@ -299,7 +300,7 @@ private:
     {
         if(QOpenGLProgram->isLinked())
         {
-            program = QOpenGLProgram;
+            responsible_drawable->program = QOpenGLProgram;
             return true;
         }
         else
@@ -307,6 +308,8 @@ private:
             return false;
         }
     }
+
+    SX_Drawable *responsible_drawable;
 
     vector<SX_Model> models;
     viewport_descriptor viewport;

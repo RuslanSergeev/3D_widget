@@ -75,9 +75,11 @@ void SX_3D_Widget::initializeGL()
 
     sx_model = new SX_Model;
     sx_model->add_mesh(*sx_mesh);
+
 //    sx_model->move_by_world_vector(glm::vec3(0.0f, 0.2f, 0.0f));
 
     sx_camera->add_model(*sx_model);
+
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -95,16 +97,6 @@ void SX_3D_Widget::paintGL()
     static float angle = 0;
     angle += 0.5;
 
-//    mat4x4 mvp;
-//    mvp = glm::perspective(45.0f, width()*1.0f/height(), 0.005f, 6.0f)
-//            *glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f))
-//            *glm::translate(mat4x4(), vec3(0, 0, 2*cos(glm::radians(angle))))
-//            *glm::rotate(mat4x4(), glm::radians(angle), glm::vec3(1.0f, 1.0f, -1.0f));
-
-//    glEnable(GL_DEPTH_TEST);
-
-//    sx_camera->get_model(0).set_model_view_projection(mvp);
-
 //    sx_camera->get_model(0).rotate_arround_self_point(
 //                glm::vec3(-0.25f, -0.25f, 0.0f),
 //                glm::vec3(0.0f, 0.0f, 1.0f),
@@ -117,6 +109,7 @@ void SX_3D_Widget::paintGL()
 
 //    sx_camera->get_model(0).move_by_world_vector(glm::vec3(0.0003f, 0.0003f, 0.0f));
 
+//    sx_camera->get_model(0).set_location(glm::vec3(0.0f, 0.0f, 0.0f));
     sx_camera->repaint();
 
 //    glDisable(GL_DEPTH_TEST);

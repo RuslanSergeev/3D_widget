@@ -31,5 +31,5 @@ public:
     program_location_descriptor attributes_locations;
     GLuint primitive_type = GL_TRIANGLES;
 
-    glm::mat4x4 view_projection_matrix;
+    glm::mat4x4 view_projection_matrix = glm::mat4x4(1.0f);
 };

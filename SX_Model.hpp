@@ -55,7 +55,7 @@ public:
 
     ~SX_Model()
     {
-//        clear_buffers();
+        //        clear_buffers();
     }
 
     /*
@@ -70,16 +70,14 @@ public:
             update_meshes();
             status = model_ready;
         }
-        else
+
+        update_model_view_projection_matrix();
+        //            upload_model_view_projection_matrix();
+        auto current_mesh = meshes.begin();
+        while(current_mesh != meshes.end())
         {
-            update_model_view_projection_matrix();
-//            upload_model_view_projection_matrix();
-            auto current_mesh = meshes.begin();
-            while(current_mesh != meshes.end())
-            {
-                current_mesh->draw();
-                ++current_mesh;
-            }
+            current_mesh->draw();
+            ++current_mesh;
         }
     }
 
@@ -186,7 +184,7 @@ private:
     void upload_model_view_projection_matrix()
     {
         responsible_camera->gl_functions->glUniformMatrix4fv(responsible_camera->attributes_locations.model_matrix_location, 1, GL_FALSE,
-                                         glm::value_ptr(model_view_projection_matrix));
+                                                             glm::value_ptr(model_view_projection_matrix));
     }
 
     mat4x4 model_view_projection_matrix = glm::mat4x4(1.0f);

@@ -40,8 +40,8 @@ public:
     typedef struct mesh_data_descriptor_{
         vector<mesh_vertex_descriptor> points_array;
         vector<GLuint> indexes_array;
-        vector<QOpenGLTexture *> textures_array;
-        vector<const char *> sampler_names;
+        list<QOpenGLTexture *> textures_array;
+        list<const char *> sampler_names;
     } mesh_data_descriptor;
 
     /*!
@@ -59,13 +59,11 @@ public:
         {
             setup_buffers();
         }
-        else
-        {
+
             activate_mesh_textures();
             VertexArrayObject->bind();
             responsible_camera->gl_functions->glDrawElements(responsible_camera->primitive_type, mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
             VertexArrayObject->release();
-        }
     }
 
     bool add_texture(const char *texture_filename, const char *sampler_name)
@@ -139,36 +137,6 @@ public:
         }
     }
 
-//    bool set_functions(QOpenGLFunctions *OpenGLContext)
-//    {
-//        if(nullptr!=OpenGLContext)
-//        {
-//            gl_functions = OpenGLContext;
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    bool set_program(QOpenGLShaderProgram *OpenGLProgram)
-//    {
-//        if((nullptr != OpenGLProgram) && (OpenGLProgram->isLinked()))
-//        {
-//            program = OpenGLProgram;
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    void set_attributes_locations(const program_location_descriptor &new_locations)
-//    {
-//        attributes_locations = new_locations;
-//    }
-
-//    void set_primitive_type(const GLuint new_primitive_type)
-//    {
-//        primitive_type = new_primitive_type;
-//    }
-
 private:
 
     bool textures_full() const
@@ -232,13 +200,9 @@ private:
         ElementBufferObject->destroy();
     }
 
-//    QOpenGLFunctions *gl_functions = nullptr;
-//    QOpenGLShaderProgram *program = nullptr;
-
     mesh_status_type status = mesh_buffers_not_ready;
     mesh_data_descriptor mesh_data;
     program_location_descriptor attributes_locations;
-//    GLint primitive_type = GL_TRIANGLES;
 
     SX_Drawable *responsible_camera;
 
