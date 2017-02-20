@@ -22,7 +22,7 @@ HEADERS  += \
     SX_Model.hpp \
     SX_Camera.hpp \
     SX_Mesh.hpp \
-    SX_Attributes.hpp
+    SX_Drawable.hpp
 
 FORMS    += \
     SX_3D_Client.ui

@@ -73,9 +73,9 @@ void SX_3D_Widget::initializeGL()
     sx_mesh->add_index(12);sx_mesh->add_index(13);sx_mesh->add_index(14);
     sx_mesh->add_index(12);sx_mesh->add_index(14);sx_mesh->add_index(15);
 
-    sx_model = new SX_Model(GL_TRIANGLES);
+    sx_model = new SX_Model;
     sx_model->add_mesh(*sx_mesh);
-    sx_model->move_by_world_vector(glm::vec3(0.0f, 0.2f, 0.0f));
+//    sx_model->move_by_world_vector(glm::vec3(0.0f, 0.2f, 0.0f));
 
     sx_camera->add_model(*sx_model);
 
@@ -105,15 +105,15 @@ void SX_3D_Widget::paintGL()
 
 //    sx_camera->get_model(0).set_model_view_projection(mvp);
 
-    sx_camera->get_model(0).rotate_arround_self_point(
-                glm::vec3(-0.25f, -0.25f, 0.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                0.01f);
+//    sx_camera->get_model(0).rotate_arround_self_point(
+//                glm::vec3(-0.25f, -0.25f, 0.0f),
+//                glm::vec3(0.0f, 0.0f, 1.0f),
+//                0.01f);
 
-    sx_camera->get_model(0).set_view_projection_matrix(glm::perspective(45.0f, width()*1.0f/height(), 0.005f, 6.0f)
-                                                       *glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
-                                                                    glm::vec3(0.0f, 0.0f, 0.0f),
-                                                                    glm::vec3(0.0f, 1.0f, 1.0f)));
+//    sx_camera->get_model(0).set_view_projection_matrix(glm::perspective(45.0f, width()*1.0f/height(), 0.005f, 6.0f)
+//                                                       *glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
+//                                                                    glm::vec3(0.0f, 0.0f, 0.0f),
+//                                                                    glm::vec3(0.0f, 1.0f, 1.0f)));
 
 //    sx_camera->get_model(0).move_by_world_vector(glm::vec3(0.0003f, 0.0003f, 0.0f));
 

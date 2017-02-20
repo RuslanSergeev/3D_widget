@@ -41,26 +41,16 @@ public:
         model_ready
     };
 
-    /*!
-     * @brief  Пустой конструктор для контейнеров.
-    */
-    SX_Model():
-        SX_Model(GL_TRIANGLES)
-    {
-    }
-
     /*
      *  TODO: примитив не должен храниться в модели - это скорее параметр камеры,
      *  чтобы была возможность отрисовки одной модели несколькими примитивами,
      *  которые хранятся в камерах!
      */
-    SX_Model(const GLuint drawing_primitive_type):
-        primitive_type(drawing_primitive_type)
+    SX_Model()
     {
         set_location(vec3(0, 0, 0));
         set_orientation(vec3(0, 0, 0));
         set_scaling(glm::vec3(1.0f));
-        set_view_projection_matrix(glm::mat4x4(1.0f));
     }
 
     ~SX_Model()
@@ -83,7 +73,7 @@ public:
         else
         {
             update_model_view_projection_matrix();
-            upload_model_view_projection_matrix();
+//            upload_model_view_projection_matrix();
             auto current_mesh = meshes.begin();
             while(current_mesh != meshes.end())
             {
@@ -142,11 +132,6 @@ public:
         scaling = new_scaling;
     }
 
-    void set_view_projection_matrix(const mat4x4 &new_view_projection_matrix)
-    {
-        view_projection_matrix = new_view_projection_matrix;
-    }
-
     const mat4x4 &get_model_matrix() const
     {
         return model_matrix;
@@ -157,15 +142,25 @@ public:
         meshes.push_back(new_mesh);
     }
 
+    bool set_responsible_camera(SX_Drawable *new_responsible_camera)
+    {
+        if(new_responsible_camera)
+        {
+            responsible_camera = new_responsible_camera;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     void update_meshes()
     {
         auto current_mesh = meshes.begin();
         while(current_mesh != meshes.end())
         {
-            current_mesh->set_primitive_type(primitive_type);
-            current_mesh->set_functions(gl_functions);
-            current_mesh->set_attributes_locations(attributes_locations);
-            current_mesh->set_program(program);
+            current_mesh->set_responsible_camera(responsible_camera);
             ++current_mesh;
         }
     }
@@ -173,40 +168,13 @@ public:
     void update_model_view_projection_matrix()
     {
         model_view_projection_matrix =
-                view_projection_matrix *
+                responsible_camera->view_projection_matrix *
                 model_matrix           *
                 glm::scale(glm::mat4x4(1.0f), scaling);
     }
 
     bool is_ready() const{
-        return model_ready == status;
-    }
-
-    bool set_functions(QOpenGLFunctions *OpenGLFunctions)
-    {
-        if(nullptr!=OpenGLFunctions)
-        {
-            gl_functions = OpenGLFunctions;
-
-            return true;
-        }
-        return false;
-    }
-
-    bool set_program(QOpenGLShaderProgram *OpenGLProgram)
-    {
-        if(nullptr != OpenGLProgram && OpenGLProgram->isLinked())
-        {
-            program = OpenGLProgram;
-
-            return true;
-        }
-        return false;
-    }
-
-    void set_attributes_locations(const program_location_descriptor &new_locations)
-    {
-        attributes_locations = new_locations;
+        return (model_ready == status) && responsible_camera;
     }
 
 private:
@@ -217,21 +185,18 @@ private:
     */
     void upload_model_view_projection_matrix()
     {
-        gl_functions->glUniformMatrix4fv(attributes_locations.model_matrix_location, 1, GL_FALSE,
+        responsible_camera->gl_functions->glUniformMatrix4fv(responsible_camera->attributes_locations.model_matrix_location, 1, GL_FALSE,
                                          glm::value_ptr(model_view_projection_matrix));
     }
 
-    QOpenGLFunctions *gl_functions = nullptr;
-    QOpenGLShaderProgram *program = nullptr;
-
-    const GLuint primitive_type;
-    mat4x4 model_view_projection_matrix;
-    mat4x4 model_matrix;
-    mat4x4 view_projection_matrix;
-    vec3 scaling;
+    mat4x4 model_view_projection_matrix = glm::mat4x4(1.0f);
+    mat4x4 model_matrix = glm::mat4x4(1.0f);
+    vec3 scaling = glm::vec3(1.0f, 1.0f, 1.0f);
 
     model_status_type status = model_not_ready;
-    program_location_descriptor attributes_locations;
+
+
+    SX_Drawable *responsible_camera = nullptr;
 
     list<SX_Mesh> meshes;
 };

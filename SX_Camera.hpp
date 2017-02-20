@@ -7,7 +7,7 @@ using std::vector;
 #include <QOpenGLFunctions>
 #include <QString>
 
-#include <SX_Attributes.hpp>
+#include <SX_Drawable.hpp>
 #include <SX_Model.hpp>
 
 typedef struct viewport_descriptor_
@@ -39,20 +39,21 @@ typedef struct camera_descriptor_
 
 static const camera_descriptor standard_camera =
 {
-    .camera_location = glm::vec3(0.0f, 0.0f, 1.0f),
+    .camera_location = glm::vec3(0.0f, 0.0f, 3.0f),
     .camera_target = glm::vec3(0.0f, 0.0f, 0.0f),
     .camera_up = glm::vec3(0.0f, 1.0f, 0.0f),
-    .frustum_near = 1.0e-3,
-    .frustum_far = 1.0f,
-    .frustum_field_of_view = 45.0f,
+    .frustum_near = 1.0e-2f,
+    .frustum_far = 10.0f,
+    .frustum_field_of_view = 15.0f,
     .aspect_ratio = 800.0f/600.0f
 };
 
-class SX_Camera
+class SX_Camera : public SX_Drawable
 {
 public:
 
     SX_Camera(const QString &VertexShaderFilename, const QString &FragmentShaderFilename,
+              GLuint new_primitive_type = GL_TRIANGLES,
               viewport_descriptor screen_viewport = standard_veiwport,
               camera_descriptor cam_descriptor_param = standard_camera,
               const size_t max_number_of_models = 100)
@@ -81,15 +82,17 @@ public:
 
         new_program->create();
         set_program(new_program);
-        configure_attributes_locations();
+
 
         QOpenGLFunctions *gl_functions = QOpenGLContext::currentContext()->functions();
-        gl_functions->glClearColor(0.05f, 0.13f, 0.15f, 1.0f);
+        gl_functions->glClearColor(0.15f, 0.13f, 0.05f, 1.0f);
         gl_functions->glEnable(GL_DEPTH_TEST);
         gl_functions->glEnable(GL_MULTISAMPLE);
         set_functions(gl_functions);
 
         set_camera_descriptor(cam_descriptor_param);
+
+        primitive_type = new_primitive_type;
 
         set_viewport(screen_viewport);
         models.reserve(max_number_of_models);
@@ -117,9 +120,11 @@ public:
 
     bool add_model(SX_Model &new_model)
     {
-        new_model.set_functions(gl_functions);
-        new_model.set_program(program);
-        new_model.set_attributes_locations(attributes_locations);
+//        new_model.set_functions(gl_functions);
+//        new_model.set_program(program);
+//        new_model.set_attributes_locations(attributes_locations);
+
+        new_model.set_responsible_camera(this);
 
         const size_t size = models.size();
         if(size == models.capacity()){
@@ -155,14 +160,27 @@ public:
     bool repaint(){
         if(is_ready()){
 
+
+
+            program->bind();
+            configure_attributes_locations();
             update_view_projection_matrix();
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_MULTISAMPLE);
+
+            glClearColor(0.31f, 0.1f, 0.45f, 1.0);
+            glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
             gl_functions->glViewport(viewport.origin_x,
                                      viewport.origin_y,
                                      viewport.width,
                                      viewport.height);
 
-            program->bind();
+//            gl_functions->glViewport(0.0f, 0.0f, 800.0f, 600.0f);
+
+
             auto current_model = models.begin();
             while(current_model != models.end())
             {
@@ -230,8 +248,6 @@ public:
                              cam_descriptor.camera_up);
     }
 
-
-
     bool use()
     {
         if(is_ready())
@@ -292,15 +308,7 @@ private:
         }
     }
 
-
-
-    QOpenGLFunctions *gl_functions = nullptr;
-    QOpenGLShaderProgram *program = nullptr;
-
-    program_location_descriptor attributes_locations;
     vector<SX_Model> models;
     viewport_descriptor viewport;
     camera_descriptor cam_descriptor;
-
-    glm::mat4x4 view_projection_matrix;
 };
