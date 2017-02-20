@@ -17,7 +17,7 @@ void SX_3D_Widget::initializeGL()
 
     sx_mesh = new SX_Mesh;
     sx_mesh->add_texture(":/textures/container.jpg", "texture0");
-    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
     sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
@@ -26,11 +26,11 @@ void SX_3D_Widget::initializeGL()
     sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.0f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
     sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
+    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
     sx_mesh->add_index(0);sx_mesh->add_index(2);sx_mesh->add_index(3);
@@ -77,6 +77,8 @@ void SX_3D_Widget::paintGL()
                 glm::vec3(-0.25f, -0.25f, 0.0f),
                 glm::vec3(0.0f, 0.0f, 1.0f),
                 0.01f);
+
+    sx_camera->get_model(0).set_scaling(glm::vec3(1.5f, 2.0f, 1.0f));
 
     sx_camera->repaint();
 }

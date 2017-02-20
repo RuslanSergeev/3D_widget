@@ -68,6 +68,9 @@ public:
         }
     }
 
+
+    //TODO: в финальной реализации необходимо переместить текстуру в класс модели,
+    //иначе получается очень большой перерасход памяти.
     bool add_texture(const char *texture_filename, const char *sampler_name)
     {
         QOpenGLTexture *new_texture = new QOpenGLTexture(QImage(texture_filename).mirrored());

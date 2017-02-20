@@ -31,14 +31,22 @@ int main(int argc, char *argv[])
         qDebug() << QString("0 faces: ") + QString::number(scene->mMeshes[0]->mNumFaces);
         qDebug() << QString("0 vertoces: ") + QString::number(scene->mMeshes[0]->mNumVertices);
         qDebug() << QString("0 norm: ") +
-                    QString::number(scene->mMeshes[0]->mNormals->x) + " " +
-                QString::number(scene->mMeshes[0]->mNormals->y) + " " +
-                QString::number(scene->mMeshes[0]->mNormals->z);
+                    QString::number(scene->mMeshes[0]->mNormals[0].x) + " " +
+                QString::number(scene->mMeshes[0]->mNormals[0].x) + " " +
+                QString::number(scene->mMeshes[0]->mNormals[0].x);
         qDebug() << QString("0 Indices: ") +
                     QString::number(scene->mMeshes[0]->mFaces[5].mNumIndices) + " " +
                 QString::number(scene->mMeshes[0]->mFaces[5].mIndices[0]) + " " +
                 QString::number(scene->mMeshes[0]->mFaces[5].mIndices[1]) + " " +
                 QString::number(scene->mMeshes[0]->mFaces[5].mIndices[2]);
+
+        qDebug() << QString("materials: ") + QString::number(scene->mNumMaterials);
+        qDebug() << QString("materials 0: ") + QString::number(scene->mMaterials[0]->GetTextureCount(aiTextureType_AMBIENT));
+        qDebug() << QString("materials 0: ") + QString::number(scene->mMaterials[0]->GetTextureCount(aiTextureType_DIFFUSE));
+        qDebug() << QString("materials 0: ") + QString::number(scene->mMaterials[0]->GetTextureCount(aiTextureType_SPECULAR));
+        qDebug() << QString("materials 0: ") + QString::number(scene->mMaterials[0]->GetTextureCount(aiTextureType_NORMALS));
+        qDebug() << QString("materials 0: ") + QString::number(scene->mMaterials[0]->GetTextureCount(aiTextureType_HEIGHT));
+
 
     }
 

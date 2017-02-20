@@ -28,6 +28,10 @@ using glm::quat;
 using glm::mat3x3;
 using glm::mat4x4;
 
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
+
 
 class SX_Model{
 public:
@@ -58,6 +62,23 @@ public:
         //        clear_buffers();
     }
 
+    bool load_from_file(const char *filename)
+    {
+        Assimp::Importer importer;
+        const aiScene *scene = importer.ReadFile(filename,
+                                                 aiProcess_Triangulate|aiProcess_GenNormals);
+        if(scene)
+        {
+
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     /*
      * TODO: должен принимать камеру, с помощью которой будет производиться отрисовка.
      * Камера должна хранить: своё положение, ориентацию, параметры перспективы, примитивы отрисовки
@@ -79,6 +100,17 @@ public:
             {
                 current_mesh->draw();
                 ++current_mesh;
+            }
+
+
+            if(has_child_models())
+            {
+                auto current_child_model = child_models.begin();
+                while(current_child_model != child_models.end())
+                {
+                    current_child_model->draw();
+                    ++current_child_model;
+                }
             }
         }
     }
@@ -137,6 +169,31 @@ public:
         return model_matrix;
     }
 
+    const vec3 &get_scaling_vector() const
+    {
+        return scaling;
+    }
+
+    bool add_model(SX_Model &new_model)
+    {
+        new_model.set_responsible_drawable(responsible_drawable);
+        new_model.set_parrent_model(this);
+
+        const size_t size = child_models.size();
+        if(size == child_models.capacity()){
+            qDebug() << "warning, attempt to reallocate models space!";
+            child_models.resize(2*size);
+        }
+
+        child_models.push_back(new_model);
+
+        return true;
+    }
+
+    SX_Model &get_model(const int model_index){
+        return child_models[model_index];
+    }
+
     void add_mesh(SX_Mesh &new_mesh)
     {
         meshes.push_back(new_mesh);
@@ -154,14 +211,54 @@ public:
 
     void update_model_view_projection_matrix()
     {
-        model_view_projection_matrix =
-                responsible_drawable->view_projection_matrix *
-                model_matrix           *
-                glm::scale(glm::mat4x4(1.0f), scaling);
+        if(has_parrent_models())
+        {
+            model_view_projection_matrix =
+                    responsible_drawable->view_projection_matrix    *
+                    parrent_model->get_model_matrix()               *
+                    glm::scale(glm::mat4x4(1.0f), parrent_model->get_scaling_vector()) *
+                    model_matrix                                    *
+                    glm::scale(glm::mat4x4(1.0f), scaling);
+        }
+        else
+        {
+            model_view_projection_matrix =
+                    responsible_drawable->view_projection_matrix    *
+                    model_matrix                                    *
+                    glm::scale(glm::mat4x4(1.0f), scaling);
+        }
+    }
+
+    bool has_parrent_models()
+    {
+        return parrent_model != nullptr;
+    }
+
+    bool has_child_models()
+    {
+        return child_models.size() != 0;
     }
 
     bool is_ready() const{
         return model_ready == status;
+    }
+
+    bool set_parrent_model(SX_Model *new_model)
+    {
+        if(new_model)
+        {
+            parrent_model = new_model;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    SX_Model *get_parrent_model()
+    {
+        return parrent_model;
     }
 
     bool set_responsible_drawable(SX_Drawable *new_drawable)
@@ -189,15 +286,16 @@ private:
                                                                glm::value_ptr(model_view_projection_matrix));
     }
 
-    SX_Drawable *responsible_drawable;
+    SX_Drawable *responsible_drawable = nullptr;
+    SX_Model *parrent_model = nullptr; //TODO: исключить все указатели. Лучше ввести веерное обновнелие дочерних моделей и мешей.
 
-    mat4x4 model_view_projection_matrix;
-    mat4x4 model_matrix;
-//    mat4x4 view_projection_matrix;
-    vec3 scaling;
+    mat4x4 model_view_projection_matrix = glm::mat4x4(1.0f);
+    mat4x4 model_matrix = glm::mat4x4(1.0f);
+    vec3 scaling = glm::vec3(1.0f, 1.0f, 1.0f);
 
     model_status_type status = model_not_ready;
 
 
     list<SX_Mesh> meshes;
+    vector<SX_Model> child_models;
 };
