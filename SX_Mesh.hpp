@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SX_Attributes.hpp>
+#include <SX_Drawable.hpp>
 
 #include <QOpenGLTexture>
 #include <QOpenGLFunctions>
@@ -62,7 +62,8 @@ public:
         {
             activate_mesh_textures();
             VertexArrayObject->bind();
-            gl_functions->glDrawElements(primitive_type, mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
+            responsible_drawable->gl_functions->glDrawElements(responsible_drawable->primitive_type,
+                                                               mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
             VertexArrayObject->release();
         }
     }
@@ -97,8 +98,8 @@ public:
 
         while(current_texture != mesh_data.textures_array.end())
         {
-            gl_functions->glActiveTexture(GL_TEXTURE0 + texture_number);
-            program->setUniformValue(*current_sampler, texture_number);
+            responsible_drawable->gl_functions->glActiveTexture(GL_TEXTURE0 + texture_number);
+            responsible_drawable->program->setUniformValue(*current_sampler, texture_number);
             (*current_texture)->bind();
 
             ++current_texture;
@@ -125,34 +126,17 @@ public:
         return VertexArrayObject->objectId();
     }
 
-    bool set_functions(QOpenGLFunctions *OpenGLContext)
+    bool set_responsible_drawable(SX_Drawable *new_drawable)
     {
-        if(nullptr!=OpenGLContext)
+        if(new_drawable)
         {
-            gl_functions = OpenGLContext;
+            responsible_drawable = new_drawable;
             return true;
         }
-        return false;
-    }
-
-    bool set_program(QOpenGLShaderProgram *OpenGLProgram)
-    {
-        if((nullptr != OpenGLProgram) && (OpenGLProgram->isLinked()))
+        else
         {
-            program = OpenGLProgram;
-            return true;
+            return false;
         }
-        return false;
-    }
-
-    void set_attributes_locations(const program_location_descriptor &new_locations)
-    {
-        attributes_locations = new_locations;
-    }
-
-    void set_primitive_type(const GLuint new_primitive_type)
-    {
-        primitive_type = new_primitive_type;
     }
 
 private:
@@ -183,22 +167,30 @@ private:
             VertexBufferObject->bind();
             VertexBufferObject->allocate(mesh_data.points_array.data(), mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor));
 
-            program->enableAttributeArray(attributes_locations.position_location);
-            program->enableAttributeArray(attributes_locations.color_location);
-            program->enableAttributeArray(attributes_locations.normal_location);
-            program->enableAttributeArray(attributes_locations.texture_coordinate_location);
+            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.position_location);
+            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.color_location);
+            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.normal_location);
+            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.texture_coordinate_location);
 
-            gl_functions->glVertexAttribPointer(attributes_locations.position_location, sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                    sizeof(mesh_vertex_descriptor), (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_position));
+            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.position_location,
+                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                      sizeof(mesh_vertex_descriptor),
+                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_position));
 
-            gl_functions->glVertexAttribPointer(attributes_locations.color_location, sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                    sizeof(mesh_vertex_descriptor), (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_color));
+            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.color_location,
+                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                      sizeof(mesh_vertex_descriptor),
+                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_color));
 
-            gl_functions->glVertexAttribPointer(attributes_locations.normal_location, sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                    sizeof(mesh_vertex_descriptor), (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_normal));
+            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.normal_location,
+                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                      sizeof(mesh_vertex_descriptor),
+                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_normal));
 
-            gl_functions->glVertexAttribPointer(attributes_locations.texture_coordinate_location, sizeof(glm::vec2)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                    sizeof(mesh_vertex_descriptor), (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_texture_coordinates));
+            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.texture_coordinate_location,
+                                                                      sizeof(glm::vec2)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                      sizeof(mesh_vertex_descriptor),
+                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_texture_coordinates));
 
             ElementBufferObject->bind();
             ElementBufferObject->allocate(mesh_data.indexes_array.data(), mesh_data.indexes_array.size() * sizeof(GLuint));
@@ -218,13 +210,11 @@ private:
         ElementBufferObject->destroy();
     }
 
-    QOpenGLFunctions *gl_functions = nullptr;
-    QOpenGLShaderProgram *program = nullptr;
+    SX_Drawable *responsible_drawable;
 
     mesh_status_type status = mesh_buffers_not_ready;
     mesh_data_descriptor mesh_data;
-    program_location_descriptor attributes_locations;
-    GLint primitive_type = GL_TRIANGLES;
+
 
     QOpenGLVertexArrayObject *VertexArrayObject = nullptr;
     QOpenGLBuffer *VertexBufferObject = nullptr;

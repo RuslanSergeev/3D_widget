@@ -7,7 +7,7 @@ using std::vector;
 #include <QOpenGLFunctions>
 #include <QString>
 
-#include <SX_Attributes.hpp>
+#include <SX_Drawable.hpp>
 #include <SX_Model.hpp>
 
 typedef struct viewport_descriptor_
@@ -52,13 +52,14 @@ class SX_Camera
 {
 public:
 
-    SX_Camera(const QString &VertexShaderFilename, const QString &FragmentShaderFilename,
+    SX_Camera(const QString &VertexShaderFilename,
+              const QString &FragmentShaderFilename,
+              const GLuint primitive_type = GL_TRIANGLES,
               viewport_descriptor screen_viewport = standard_veiwport,
               camera_descriptor cam_descriptor_param = standard_camera,
               const size_t max_number_of_models = 100)
     {
         QOpenGLShaderProgram *new_program = new QOpenGLShaderProgram;
-
         if(!new_program->addShaderFromSourceFile(QOpenGLShader::Vertex, VertexShaderFilename))
         {
             qDebug() << "Unable to add vertex shader:";
@@ -78,8 +79,11 @@ public:
         {
             qDebug() << "shader new_program succesfully linked.";
         }
-
         new_program->create();
+
+        responsible_drawable = new SX_Drawable;
+        responsible_drawable->primitive_type = primitive_type;
+
         set_program(new_program);
         configure_attributes_locations();
 
@@ -103,13 +107,19 @@ public:
     */
     bool configure_attributes_locations()
     {
-        if(nullptr != program && program->isLinked())
+        if(nullptr != responsible_drawable->program &&
+                responsible_drawable->program->isLinked())
         {
-            attributes_locations.color_location = program->attributeLocation(color_attribute_name);
-            attributes_locations.model_matrix_location = program->uniformLocation(model_matrix_uniform_name);
-            attributes_locations.normal_location = program->attributeLocation(normal_attribute_name);
-            attributes_locations.position_location = program->attributeLocation(position_attribute_name);
-            attributes_locations.texture_coordinate_location = program->attributeLocation(texture_coordinate_attribute_name);
+            responsible_drawable->attributes_locations.color_location =
+                    responsible_drawable->program->attributeLocation(color_attribute_name);
+            responsible_drawable->attributes_locations.model_matrix_location =
+                    responsible_drawable->program->uniformLocation(model_matrix_uniform_name);
+            responsible_drawable->attributes_locations.normal_location =
+                    responsible_drawable->program->attributeLocation(normal_attribute_name);
+            responsible_drawable->attributes_locations.position_location =
+                    responsible_drawable->program->attributeLocation(position_attribute_name);
+            responsible_drawable->attributes_locations.texture_coordinate_location =
+                    responsible_drawable->program->attributeLocation(texture_coordinate_attribute_name);
             return true;
         }
         return false;
@@ -117,9 +127,7 @@ public:
 
     bool add_model(SX_Model &new_model)
     {
-        new_model.set_functions(gl_functions);
-        new_model.set_program(program);
-        new_model.set_attributes_locations(attributes_locations);
+        new_model.set_responsible_drawable(responsible_drawable);
 
         const size_t size = models.size();
         if(size == models.capacity()){
@@ -157,12 +165,12 @@ public:
 
             update_view_projection_matrix();
 
-            gl_functions->glViewport(viewport.origin_x,
-                                     viewport.origin_y,
-                                     viewport.width,
-                                     viewport.height);
+            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
+                                                           viewport.origin_y,
+                                                           viewport.width,
+                                                           viewport.height);
 
-            program->bind();
+            responsible_drawable->program->bind();
             auto current_model = models.begin();
             while(current_model != models.end())
             {
@@ -170,7 +178,7 @@ public:
                 ++current_model;
             }
 
-            program->release();
+            responsible_drawable->program->release();
             return true;
         }
         else
@@ -179,39 +187,29 @@ public:
         }
     }
 
-    void set_location(glm::vec3 new_location)
+    void set_aspect_ratio(float aspect_ratio)
     {
-        cam_descriptor.camera_location = new_location;
+        cam_descriptor.aspect_ratio = aspect_ratio;
     }
 
-    void set_target(glm::vec3 new_target)
+    void set_camera_params(glm::vec3 location,
+                           glm::vec3 target,
+                           glm::vec3 up_direction)
     {
-        cam_descriptor.camera_target = new_target;
+        cam_descriptor.camera_location = location;
+        cam_descriptor.camera_target = target;
+        cam_descriptor.camera_up = up_direction;
     }
 
-    void set_up_direction(glm::vec3 new_up_direction)
+    void set_frustum_params(float frustum_near,
+                            float frustum_far,
+                            float field_of_view,
+                            float aspect_ratio)
     {
-        cam_descriptor.camera_up = new_up_direction;
-    }
-
-    void set_frustum_near(float new_frustum_near)
-    {
-        cam_descriptor.frustum_near = new_frustum_near;
-    }
-
-    void set_frustum_far(float new_frustum_far)
-    {
-        cam_descriptor.frustum_far = new_frustum_far;
-    }
-
-    void set_frustum_field_of_view(float new_frustum_field_of_view)
-    {
-        cam_descriptor.frustum_field_of_view = new_frustum_field_of_view;
-    }
-
-    void set_aspect_ratio(float new_aspect_ratio)
-    {
-        cam_descriptor.aspect_ratio = new_aspect_ratio;
+        cam_descriptor.frustum_near = frustum_near;
+        cam_descriptor.frustum_far = frustum_far;
+        cam_descriptor.frustum_field_of_view = field_of_view;
+        cam_descriptor.aspect_ratio = aspect_ratio;
     }
 
     void set_camera_descriptor(const camera_descriptor &new_cam_descriptor)
@@ -221,22 +219,20 @@ public:
 
     void update_view_projection_matrix()
     {
-        view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
-                                                  cam_descriptor.aspect_ratio,
-                                                  cam_descriptor.frustum_near,
-                                                  cam_descriptor.frustum_far)
-                *glm::lookAt(cam_descriptor.camera_location,
-                             cam_descriptor.camera_target,
-                             cam_descriptor.camera_up);
+        responsible_drawable->view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
+                                                                        cam_descriptor.aspect_ratio,
+                                                                        cam_descriptor.frustum_near,
+                                                                        cam_descriptor.frustum_far)
+                * glm::lookAt(cam_descriptor.camera_location,
+                              cam_descriptor.camera_target,
+                              cam_descriptor.camera_up);
     }
-
-
 
     bool use()
     {
         if(is_ready())
         {
-            program->bind();
+            responsible_drawable->program->bind();
             return true;
         }
         else
@@ -250,7 +246,7 @@ public:
     {
         if(is_ready())
         {
-            program->release();
+            responsible_drawable->program->release();
             return true;
         }
         else
@@ -261,7 +257,8 @@ public:
 
     bool is_ready()
     {
-        return program->isLinked() && (nullptr != gl_functions);
+        return responsible_drawable->program->isLinked() &&
+                (nullptr != responsible_drawable->gl_functions);
     }
 
 private:
@@ -270,7 +267,7 @@ private:
     {
         if(OpenGLContext)
         {
-            gl_functions = OpenGLContext;
+            responsible_drawable->gl_functions = OpenGLContext;
             return true;
         }
         else
@@ -283,7 +280,7 @@ private:
     {
         if(QOpenGLProgram->isLinked())
         {
-            program = QOpenGLProgram;
+            responsible_drawable->program = QOpenGLProgram;
             return true;
         }
         else
@@ -292,15 +289,9 @@ private:
         }
     }
 
+    SX_Drawable *responsible_drawable;
 
-
-    QOpenGLFunctions *gl_functions = nullptr;
-    QOpenGLShaderProgram *program = nullptr;
-
-    program_location_descriptor attributes_locations;
     vector<SX_Model> models;
     viewport_descriptor viewport;
     camera_descriptor cam_descriptor;
-
-    glm::mat4x4 view_projection_matrix;
 };

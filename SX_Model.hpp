@@ -41,31 +41,21 @@ public:
         model_ready
     };
 
-    /*!
-     * @brief  Пустой конструктор для контейнеров.
-    */
-    SX_Model():
-        SX_Model(GL_TRIANGLES)
-    {
-    }
-
     /*
      *  TODO: примитив не должен храниться в модели - это скорее параметр камеры,
      *  чтобы была возможность отрисовки одной модели несколькими примитивами,
      *  которые хранятся в камерах!
      */
-    SX_Model(const GLuint drawing_primitive_type):
-        primitive_type(drawing_primitive_type)
+    SX_Model()
     {
         set_location(vec3(0, 0, 0));
         set_orientation(vec3(0, 0, 0));
         set_scaling(glm::vec3(1.0f));
-        set_view_projection_matrix(glm::mat4x4(1.0f));
     }
 
     ~SX_Model()
     {
-//        clear_buffers();
+        //        clear_buffers();
     }
 
     /*
@@ -142,11 +132,6 @@ public:
         scaling = new_scaling;
     }
 
-    void set_view_projection_matrix(const mat4x4 &new_view_projection_matrix)
-    {
-        view_projection_matrix = new_view_projection_matrix;
-    }
-
     const mat4x4 &get_model_matrix() const
     {
         return model_matrix;
@@ -162,10 +147,7 @@ public:
         auto current_mesh = meshes.begin();
         while(current_mesh != meshes.end())
         {
-            current_mesh->set_primitive_type(primitive_type);
-            current_mesh->set_functions(gl_functions);
-            current_mesh->set_attributes_locations(attributes_locations);
-            current_mesh->set_program(program);
+            current_mesh->set_responsible_drawable(responsible_drawable);
             ++current_mesh;
         }
     }
@@ -173,7 +155,7 @@ public:
     void update_model_view_projection_matrix()
     {
         model_view_projection_matrix =
-                view_projection_matrix *
+                responsible_drawable->view_projection_matrix *
                 model_matrix           *
                 glm::scale(glm::mat4x4(1.0f), scaling);
     }
@@ -182,31 +164,17 @@ public:
         return model_ready == status;
     }
 
-    bool set_functions(QOpenGLFunctions *OpenGLFunctions)
+    bool set_responsible_drawable(SX_Drawable *new_drawable)
     {
-        if(nullptr!=OpenGLFunctions)
+        if(new_drawable)
         {
-            gl_functions = OpenGLFunctions;
-
+            responsible_drawable = new_drawable;
             return true;
         }
-        return false;
-    }
-
-    bool set_program(QOpenGLShaderProgram *OpenGLProgram)
-    {
-        if(nullptr != OpenGLProgram && OpenGLProgram->isLinked())
+        else
         {
-            program = OpenGLProgram;
-
-            return true;
+            return false;
         }
-        return false;
-    }
-
-    void set_attributes_locations(const program_location_descriptor &new_locations)
-    {
-        attributes_locations = new_locations;
     }
 
 private:
@@ -217,21 +185,19 @@ private:
     */
     void upload_model_view_projection_matrix()
     {
-        gl_functions->glUniformMatrix4fv(attributes_locations.model_matrix_location, 1, GL_FALSE,
-                                         glm::value_ptr(model_view_projection_matrix));
+        responsible_drawable->gl_functions->glUniformMatrix4fv(responsible_drawable->attributes_locations.model_matrix_location, 1, GL_FALSE,
+                                                               glm::value_ptr(model_view_projection_matrix));
     }
 
-    QOpenGLFunctions *gl_functions = nullptr;
-    QOpenGLShaderProgram *program = nullptr;
+    SX_Drawable *responsible_drawable;
 
-    const GLuint primitive_type;
     mat4x4 model_view_projection_matrix;
     mat4x4 model_matrix;
-    mat4x4 view_projection_matrix;
+//    mat4x4 view_projection_matrix;
     vec3 scaling;
 
     model_status_type status = model_not_ready;
-    program_location_descriptor attributes_locations;
+
 
     list<SX_Mesh> meshes;
 };
