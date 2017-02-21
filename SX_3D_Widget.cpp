@@ -3,7 +3,7 @@
 SX_Model *sx_model;
 SX_Camera *sx_camera, *wire_camera;
 vec3 cam_speed = vec3(0.0f, 0.0f, 0.0f);
-vec3 cam_position = vec3(0.0f, 0.0f, 5.0f);
+vec3 cam_position = vec3(0.0f, 0.0f, 15.0f);
 SX_Mesh *sx_mesh;
 
 
@@ -52,31 +52,50 @@ void SX_3D_Widget::initializeGL()
     sx_model = new SX_Model;
     sx_model->add_mesh(*sx_mesh);
 
-    //    sx_camera->add_model(*sx_model);
+//    sx_model->move_by_self_vector(glm::vec3(-0.5f, 0.0f, -2.0f));
 
+//    sx_model->add_model(*sx_model);
+//    sx_model->move_by_self_vector(glm::vec3(0.5f, 0.0f, 3.0f));
 
-    sx_model->move_by_self_vector(glm::vec3(-0.5f, 0.0f, -2.0f));
-
+    sx_model->set_location(glm::vec3(-1.2f, -1.3f, -0.0f));
     sx_model->add_model(*sx_model);
-    sx_model->move_by_self_vector(glm::vec3(0.5f, 0.0f, 3.0f));
-    //    sx_camera->add_model(*sx_model);
 
-    sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 5.0f),
+    sx_model->set_location(glm::vec3(0.5f, -0.6f, -0.0f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(-0.5f, 1.2f, -0.0f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(0.7f, -3.4f, 0.5f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(-0.7f, 2.4f, 0.0f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(1.5f, -2.0f, 0.0f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(-1.5f, 2.4f, 0.0f));
+    sx_model->add_model(*sx_model);
+
+    sx_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                  glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
 
 
-    wire_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 5.0f),
+    wire_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                    glm::vec3(0.0f, 0.0f, 0.0f),
                                    glm::vec3(0.0f, 1.0f, 0.0f));
 
 
-    sx_camera->set_frustum_params(0.001f, 14.0f, 45.0f, 800.0f/600.0f);
-    wire_camera->set_frustum_params(0.001f, 14.0f, 45.0f, 800.0f/600.0f);
+    sx_camera->set_frustum_params(0.001f, 30.0f, 45.0f, 800.0f/600.0f);
+    wire_camera->set_frustum_params(0.001f, 30.0f, 45.0f, 800.0f/600.0f);
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->start(25);
+    timer->start(1);
 }
 
 void SX_3D_Widget::resizeGL(int __width, int __height)
@@ -109,6 +128,11 @@ void SX_3D_Widget::paintGL()
         sx_model->draw(wire_camera);
     }
 }
+
+
+
+
+
 
 void SX_3D_Widget::init_format()
 {

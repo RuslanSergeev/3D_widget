@@ -21,8 +21,7 @@ HEADERS  += \
     SX_3D_Client.h \
     SX_Model.hpp \
     SX_Camera.hpp \
-    SX_Mesh.hpp \
-    SX_DrawDevice.hpp
+    SX_Mesh.hpp
 
 FORMS    += \
     SX_3D_Client.ui

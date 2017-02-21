@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SX_DrawDevice.hpp>
+//#include <SX_DrawDevice.hpp>
 #include <SX_Camera.hpp>
 
 #include <QOpenGLTexture>
@@ -53,17 +53,16 @@ public:
         mesh_buffers_ready
     };
 
-    void draw(SX_Camera *drawable)
+    void draw(SX_Camera *draw_camera)
     {
-        set_responsible_drawable(drawable->get_responsible_drawable());
 
         if(!is_ready())
         {
-            setup_buffers();
+            setup_buffers(draw_camera);
         }
-        activate_mesh_textures();
+        activate_mesh_textures(draw_camera);
         VertexArrayObject->bind();
-        responsible_drawable->gl_functions->glDrawElements(responsible_drawable->primitive_type,
+        draw_camera->camera_renderer.gl_functions->glDrawElements(draw_camera->camera_renderer.primitive_type,
                                                            mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
         VertexArrayObject->release();
 
@@ -95,15 +94,15 @@ public:
         return false;
     }
 
-    void activate_mesh_textures(){
+    void activate_mesh_textures(SX_Camera *draw_camera){
         auto current_texture = mesh_data.textures_array.begin();
         auto current_sampler = mesh_data.sampler_names.begin();
         GLuint texture_number  = 0;
 
         while(current_texture != mesh_data.textures_array.end())
         {
-            responsible_drawable->gl_functions->glActiveTexture(GL_TEXTURE0 + texture_number);
-            responsible_drawable->program->setUniformValue(*current_sampler, texture_number);
+            draw_camera->camera_renderer.gl_functions->glActiveTexture(GL_TEXTURE0 + texture_number);
+            draw_camera->camera_renderer.program->setUniformValue(*current_sampler, texture_number);
             (*current_texture)->bind();
 
             ++current_texture;
@@ -130,19 +129,6 @@ public:
         return VertexArrayObject->objectId();
     }
 
-    bool set_responsible_drawable(SX_DrawDevice *new_drawable)
-    {
-        if(new_drawable)
-        {
-            responsible_drawable = new_drawable;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
 private:
 
     bool textures_full() const
@@ -152,7 +138,7 @@ private:
         return mesh_data.textures_array.size() == static_cast<size_t>(max_textures);
     }
 
-    void setup_buffers()
+    void setup_buffers(SX_Camera *draw_camera)
     {
         if(!is_ready())
         {
@@ -169,39 +155,39 @@ private:
             VertexArrayObject->bind();
 
             VertexBufferObject->bind();
-            responsible_drawable->gl_functions->glBufferData(GL_ARRAY_BUFFER,
+            draw_camera->camera_renderer.gl_functions->glBufferData(GL_ARRAY_BUFFER,
                                                              mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor),
                                                              mesh_data.points_array.data(),
                                                              GL_STREAM_DRAW);
 
-            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.position_location);
-            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.color_location);
-            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.normal_location);
-            responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.texture_coordinate_location);
+            draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.position_location);
+            draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.color_location);
+            draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.normal_location);
+            draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.texture_coordinate_location);
 
-            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.position_location,
+            draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.position_location,
                                                                       sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
                                                                       sizeof(mesh_vertex_descriptor),
                                                                       (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_position));
 
-            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.color_location,
+            draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.color_location,
                                                                       sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
                                                                       sizeof(mesh_vertex_descriptor),
                                                                       (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_color));
 
-            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.normal_location,
+            draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.normal_location,
                                                                       sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
                                                                       sizeof(mesh_vertex_descriptor),
                                                                       (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_normal));
 
-            responsible_drawable->gl_functions->glVertexAttribPointer(responsible_drawable->attributes_locations.texture_coordinate_location,
+            draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.texture_coordinate_location,
                                                                       sizeof(glm::vec2)/sizeof(float), GL_FLOAT, GL_FALSE,
                                                                       sizeof(mesh_vertex_descriptor),
                                                                       (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_texture_coordinates));
 
             ElementBufferObject->bind();
             ElementBufferObject->allocate(mesh_data.indexes_array.data(), mesh_data.indexes_array.size() * sizeof(GLuint));
-            responsible_drawable->gl_functions->glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            draw_camera->camera_renderer.gl_functions->glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                                                              mesh_data.indexes_array.size() * sizeof(GLuint),
                                                              mesh_data.indexes_array.data(),
                                                              GL_STREAM_DRAW);
@@ -221,7 +207,6 @@ private:
         ElementBufferObject->destroy();
     }
 
-    SX_DrawDevice *responsible_drawable;
 
     mesh_status_type status = mesh_buffers_not_ready;
     mesh_data_descriptor mesh_data;

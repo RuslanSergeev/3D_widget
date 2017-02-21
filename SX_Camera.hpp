@@ -3,12 +3,43 @@
 #include <vector>
 using std::vector;
 
+#include <QtOpenGL>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
-#include <QString>
 
-#include <SX_DrawDevice.hpp>
-//#include <SX_Model.hpp>
+#include <glm/glm.hpp>
+#include <glm/matrix.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+
+using glm::vec2;
+using glm::vec3;
+using glm::vec4;
+using glm::quat;
+using glm::mat3x3;
+using glm::mat4x4;
+
+
+
+static const char *position_attribute_name = "vertex_position";
+static const char *color_attribute_name = "vertex_color";
+static const char *normal_attribute_name = "vertex_normal";
+static const char *model_matrix_uniform_name = "model_view_projection_matrix";
+static const char *texture_coordinate_attribute_name = "vertex_texture_coordinates";
+
+
+
+typedef struct program_location_descriptor_{
+    GLint position_location;
+    GLint color_location;
+    GLint normal_location;
+    GLint model_matrix_location;
+    GLint texture_coordinate_location;
+} program_location_descriptor;
 
 typedef struct viewport_descriptor_
 {
@@ -26,7 +57,7 @@ static const viewport_descriptor standard_veiwport =
     .height = 600.0f
 };
 
-typedef struct camera_descriptor_
+typedef struct frustum_descriptor_
 {
     glm::vec3 camera_location;
     glm::vec3 camera_target;
@@ -35,9 +66,11 @@ typedef struct camera_descriptor_
     float frustum_far;
     float frustum_field_of_view;
     float aspect_ratio;
-}camera_descriptor;
+}frustum_descriptor;
 
-static const camera_descriptor standard_camera =
+
+
+static const frustum_descriptor standard_frustum =
 {
     .camera_location = glm::vec3(0.0f, 0.0f, 1.0f),
     .camera_target = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -48,6 +81,14 @@ static const camera_descriptor standard_camera =
     .aspect_ratio = 800.0f/600.0f
 };
 
+typedef struct renderer_descriptor_
+{
+    QOpenGLFunctions *gl_functions = nullptr;
+    QOpenGLShaderProgram *program = nullptr;
+    program_location_descriptor attributes_locations;
+    GLuint primitive_type = GL_TRIANGLES;
+}renderer_descriptor;
+
 class SX_Camera
 {
 public:
@@ -56,8 +97,7 @@ public:
               const QString &FragmentShaderFilename,
               const GLuint primitive_type = GL_TRIANGLES,
               viewport_descriptor screen_viewport = standard_veiwport,
-              camera_descriptor cam_descriptor_param = standard_camera)//,
-    //const size_t max_number_of_models = 100)
+              frustum_descriptor cam_descriptor_param = standard_frustum)
     {
         QOpenGLShaderProgram *new_program = new QOpenGLShaderProgram;
         if(!new_program->addShaderFromSourceFile(QOpenGLShader::Vertex, VertexShaderFilename))
@@ -81,8 +121,7 @@ public:
         }
         new_program->create();
 
-        responsible_drawable = new SX_DrawDevice;
-        responsible_drawable->primitive_type = primitive_type;
+        camera_renderer.primitive_type = primitive_type;
 
         set_program(new_program);
         configure_attributes_locations();
@@ -96,7 +135,6 @@ public:
         set_camera_descriptor(cam_descriptor_param);
 
         set_viewport(screen_viewport);
-        //        models.reserve(max_number_of_models);
     }
 
     /*!
@@ -107,47 +145,23 @@ public:
     */
     bool configure_attributes_locations()
     {
-        if(nullptr != responsible_drawable->program &&
-                responsible_drawable->program->isLinked())
+        if(nullptr != camera_renderer.program &&
+                camera_renderer.program->isLinked())
         {
-            responsible_drawable->attributes_locations.color_location =
-                    responsible_drawable->program->attributeLocation(color_attribute_name);
-            responsible_drawable->attributes_locations.model_matrix_location =
-                    responsible_drawable->program->uniformLocation(model_matrix_uniform_name);
-            responsible_drawable->attributes_locations.normal_location =
-                    responsible_drawable->program->attributeLocation(normal_attribute_name);
-            responsible_drawable->attributes_locations.position_location =
-                    responsible_drawable->program->attributeLocation(position_attribute_name);
-            responsible_drawable->attributes_locations.texture_coordinate_location =
-                    responsible_drawable->program->attributeLocation(texture_coordinate_attribute_name);
+            camera_renderer.attributes_locations.color_location =
+                    camera_renderer.program->attributeLocation(color_attribute_name);
+            camera_renderer.attributes_locations.model_matrix_location =
+                    camera_renderer.program->uniformLocation(model_matrix_uniform_name);
+            camera_renderer.attributes_locations.normal_location =
+                    camera_renderer.program->attributeLocation(normal_attribute_name);
+            camera_renderer.attributes_locations.position_location =
+                    camera_renderer.program->attributeLocation(position_attribute_name);
+            camera_renderer.attributes_locations.texture_coordinate_location =
+                    camera_renderer.program->attributeLocation(texture_coordinate_attribute_name);
             return true;
         }
         return false;
     }
-
-    //    bool add_model(SX_Model &new_model)
-    //    {
-    //        new_model.set_responsible_drawable(responsible_drawable);
-
-    //        const size_t size = models.size();
-    //        if(size == models.capacity()){
-    //            qDebug() << "warning, attempt to reallocate models space!";
-    //            models.resize(2*size);
-    //        }
-
-    //        models.push_back(new_model);
-
-    //        return true;
-    //    }
-
-    SX_DrawDevice *get_responsible_drawable()
-    {
-        return responsible_drawable;
-    }
-
-    //    SX_Model &get_model(const int model_index){
-    //        return models[model_index];
-    //    }
 
     void set_viewport(const float origin_x, const float origin_y,
                       const float width, const float height)
@@ -167,37 +181,10 @@ public:
         set_aspect_ratio(new_viewport.width/new_viewport.height);
     }
 
-    //    bool repaint(){
-    //        if(is_ready()){
-
-    //            update_view_projection_matrix();
-
-    //            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
-    //                                                           viewport.origin_y,
-    //                                                           viewport.width,
-    //                                                           viewport.height);
-
-    //            responsible_drawable->program->bind();
-    //            auto current_model = models.begin();
-    //            while(current_model != models.end())
-    //            {
-    //                current_model->draw();
-    //                ++current_model;
-    //            }
-
-    //            responsible_drawable->program->release();
-    //            return true;
-    //        }
-    //        else
-    //        {
-    //            return false;
-    //        }
-    //    }
-
     void set_aspect_ratio(float aspect_ratio)
     {
         camera_needs_update = true;
-        cam_descriptor.aspect_ratio = aspect_ratio;
+        frustum.aspect_ratio = aspect_ratio;
     }
 
     void set_camera_params(glm::vec3 location,
@@ -205,9 +192,9 @@ public:
                            glm::vec3 up_direction)
     {
         camera_needs_update = true;
-        cam_descriptor.camera_location = location;
-        cam_descriptor.camera_target = target;
-        cam_descriptor.camera_up = up_direction;
+        frustum.camera_location = location;
+        frustum.camera_target = target;
+        frustum.camera_up = up_direction;
     }
 
     void set_frustum_params(float frustum_near,
@@ -216,16 +203,16 @@ public:
                             float aspect_ratio)
     {
         camera_needs_update = true;
-        cam_descriptor.frustum_near = frustum_near;
-        cam_descriptor.frustum_far = frustum_far;
-        cam_descriptor.frustum_field_of_view = field_of_view;
-        cam_descriptor.aspect_ratio = aspect_ratio;
+        frustum.frustum_near = frustum_near;
+        frustum.frustum_far = frustum_far;
+        frustum.frustum_field_of_view = field_of_view;
+        frustum.aspect_ratio = aspect_ratio;
     }
 
-    void set_camera_descriptor(const camera_descriptor &new_cam_descriptor)
+    void set_camera_descriptor(const frustum_descriptor &new_cam_descriptor)
     {
         camera_needs_update = true;
-        cam_descriptor = new_cam_descriptor;
+        frustum = new_cam_descriptor;
     }
 
     void update_view_projection_matrix()
@@ -234,13 +221,13 @@ public:
         {
             camera_needs_update = false;
 
-            responsible_drawable->view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
-                                                                            cam_descriptor.aspect_ratio,
-                                                                            cam_descriptor.frustum_near,
-                                                                            cam_descriptor.frustum_far)
-                    * glm::lookAt(cam_descriptor.camera_location,
-                                  cam_descriptor.camera_target,
-                                  cam_descriptor.camera_up);
+           view_projection_matrix = glm::perspective(frustum.frustum_field_of_view,
+                                                                            frustum.aspect_ratio,
+                                                                            frustum.frustum_near,
+                                                                            frustum.frustum_far)
+                    * glm::lookAt(frustum.camera_location,
+                                  frustum.camera_target,
+                                  frustum.camera_up);
         }
     }
 
@@ -250,10 +237,10 @@ public:
         {
             camera_in_use = true;
 
-            responsible_drawable->program->bind();
+            camera_renderer.program->bind();
             update_view_projection_matrix();
 
-            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
+            camera_renderer.gl_functions->glViewport(viewport.origin_x,
                                                            viewport.origin_y,
                                                            viewport.width,
                                                            viewport.height);
@@ -269,10 +256,10 @@ public:
 
     bool release()
     {
-        if(is_ready())
+        if(camera_in_use && is_ready())
         {
             camera_in_use = false;
-            responsible_drawable->program->release();
+            camera_renderer.program->release();
             return true;
         }
         else
@@ -283,9 +270,12 @@ public:
 
     bool is_ready()
     {
-        return responsible_drawable->program->isLinked() &&
-                (nullptr != responsible_drawable->gl_functions);
+        return camera_renderer.program->isLinked() &&
+                (nullptr != camera_renderer.gl_functions);
     }
+
+    renderer_descriptor camera_renderer; //TODO: убрать в приватные!
+    mat4x4 view_projection_matrix = mat4x4(1.0f);
 
 private:
 
@@ -293,7 +283,7 @@ private:
     {
         if(OpenGLContext)
         {
-            responsible_drawable->gl_functions = OpenGLContext;
+            camera_renderer.gl_functions = OpenGLContext;
             return true;
         }
         else
@@ -306,7 +296,7 @@ private:
     {
         if(QOpenGLProgram->isLinked())
         {
-            responsible_drawable->program = QOpenGLProgram;
+            camera_renderer.program = QOpenGLProgram;
             return true;
         }
         else
@@ -315,12 +305,9 @@ private:
         }
     }
 
-    SX_DrawDevice *responsible_drawable;
-
     bool camera_needs_update = true;
     bool camera_in_use = false;
 
-    //    vector<SX_Model> models;
     viewport_descriptor viewport;
-    camera_descriptor cam_descriptor;
+    frustum_descriptor frustum;
 };

@@ -43,13 +43,11 @@ public:
         set_location(vec3(0, 0, 0));
         set_orientation(vec3(0, 0, 0));
         set_scaling(glm::vec3(1.0f));
-
-        child_models.reserve(100);
     }
 
     ~SX_Model()
     {
-        //        clear_buffers();
+//        clear_buffers();
     }
 
     bool load_from_file(const char *filename)
@@ -76,18 +74,11 @@ public:
     */
     void draw(SX_Camera *draw_camera)
     {
-        if(!is_ready())
-        {
-            update_meshes();
-            status = model_ready;
-        }
-
         draw_camera->use();
         draw_camera->update_view_projection_matrix();
-        set_responsible_drawable(draw_camera->get_responsible_drawable());
 
-        update_model_view_projection_matrix();
-        upload_model_view_projection_matrix();
+        update_model_view_projection_matrix(draw_camera);
+        upload_model_view_projection_matrix(draw_camera);
         auto current_mesh = meshes.begin();
         while(current_mesh != meshes.end())
         {
@@ -169,12 +160,10 @@ public:
 
     bool add_model(SX_Model &new_model)
     {
-        new_model.set_responsible_drawable(responsible_drawable);
         new_model.set_parrent_model(this);
 
         const size_t size = child_models.size();
         if(size == child_models.capacity()){
-            qDebug() << "warning, attempt to reallocate models space!";
             child_models.resize(2*size);
         }
 
@@ -192,22 +181,12 @@ public:
         meshes.push_back(new_mesh);
     }
 
-    void update_meshes()
-    {
-        auto current_mesh = meshes.begin();
-        while(current_mesh != meshes.end())
-        {
-            current_mesh->set_responsible_drawable(responsible_drawable);
-            ++current_mesh;
-        }
-    }
-
-    void update_model_view_projection_matrix()
+    void update_model_view_projection_matrix(SX_Camera *draw_camera)
     {
         if(has_parrent_models())
         {
             model_view_projection_matrix =
-                    responsible_drawable->view_projection_matrix    *
+                    draw_camera->view_projection_matrix             *
                     parrent_model->get_model_matrix()               *
                     glm::scale(glm::mat4x4(1.0f), parrent_model->get_scaling_vector()) *
                     model_matrix                                    *
@@ -216,7 +195,7 @@ public:
         else
         {
             model_view_projection_matrix =
-                    responsible_drawable->view_projection_matrix    *
+                    draw_camera->view_projection_matrix             *
                     model_matrix                                    *
                     glm::scale(glm::mat4x4(1.0f), scaling);
         }
@@ -254,18 +233,6 @@ public:
         return parrent_model;
     }
 
-    bool set_responsible_drawable(SX_DrawDevice *new_drawable)
-    {
-        if(new_drawable)
-        {
-            responsible_drawable = new_drawable;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
 private:
 
@@ -273,13 +240,13 @@ private:
      * @fun void upload_model_matrix()
      * @brief загружает матрицу ориентации модели в память шейдерной программы.
     */
-    void upload_model_view_projection_matrix()
+    void upload_model_view_projection_matrix(SX_Camera *draw_camera)
     {
-        responsible_drawable->gl_functions->glUniformMatrix4fv(responsible_drawable->attributes_locations.model_matrix_location, 1, GL_FALSE,
+        draw_camera->camera_renderer.gl_functions->glUniformMatrix4fv(draw_camera->camera_renderer.attributes_locations.model_matrix_location,
+                                                               1, GL_FALSE,
                                                                glm::value_ptr(model_view_projection_matrix));
     }
 
-    SX_DrawDevice *responsible_drawable = nullptr;
     SX_Model *parrent_model = nullptr;
 
     mat4x4 model_view_projection_matrix = glm::mat4x4(1.0f);
