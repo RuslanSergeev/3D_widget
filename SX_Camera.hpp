@@ -7,8 +7,8 @@ using std::vector;
 #include <QOpenGLFunctions>
 #include <QString>
 
-#include <SX_Drawable.hpp>
-#include <SX_Model.hpp>
+#include <SX_DrawDevice.hpp>
+//#include <SX_Model.hpp>
 
 typedef struct viewport_descriptor_
 {
@@ -56,8 +56,8 @@ public:
               const QString &FragmentShaderFilename,
               const GLuint primitive_type = GL_TRIANGLES,
               viewport_descriptor screen_viewport = standard_veiwport,
-              camera_descriptor cam_descriptor_param = standard_camera,
-              const size_t max_number_of_models = 100)
+              camera_descriptor cam_descriptor_param = standard_camera)//,
+    //const size_t max_number_of_models = 100)
     {
         QOpenGLShaderProgram *new_program = new QOpenGLShaderProgram;
         if(!new_program->addShaderFromSourceFile(QOpenGLShader::Vertex, VertexShaderFilename))
@@ -81,7 +81,7 @@ public:
         }
         new_program->create();
 
-        responsible_drawable = new SX_Drawable;
+        responsible_drawable = new SX_DrawDevice;
         responsible_drawable->primitive_type = primitive_type;
 
         set_program(new_program);
@@ -96,7 +96,7 @@ public:
         set_camera_descriptor(cam_descriptor_param);
 
         set_viewport(screen_viewport);
-        models.reserve(max_number_of_models);
+        //        models.reserve(max_number_of_models);
     }
 
     /*!
@@ -125,28 +125,34 @@ public:
         return false;
     }
 
-    bool add_model(SX_Model &new_model)
+    //    bool add_model(SX_Model &new_model)
+    //    {
+    //        new_model.set_responsible_drawable(responsible_drawable);
+
+    //        const size_t size = models.size();
+    //        if(size == models.capacity()){
+    //            qDebug() << "warning, attempt to reallocate models space!";
+    //            models.resize(2*size);
+    //        }
+
+    //        models.push_back(new_model);
+
+    //        return true;
+    //    }
+
+    SX_DrawDevice *get_responsible_drawable()
     {
-        new_model.set_responsible_drawable(responsible_drawable);
-
-        const size_t size = models.size();
-        if(size == models.capacity()){
-            qDebug() << "warning, attempt to reallocate models space!";
-            models.resize(2*size);
-        }
-
-        models.push_back(new_model);
-
-        return true;
+        return responsible_drawable;
     }
 
-    SX_Model &get_model(const int model_index){
-        return models[model_index];
-    }
+    //    SX_Model &get_model(const int model_index){
+    //        return models[model_index];
+    //    }
 
     void set_viewport(const float origin_x, const float origin_y,
                       const float width, const float height)
     {
+        camera_needs_update = true;
         viewport.origin_x = origin_x;
         viewport.origin_y = origin_y;
         viewport.width = width;
@@ -156,39 +162,41 @@ public:
 
     void set_viewport(const viewport_descriptor &new_viewport)
     {
+        camera_needs_update = true;
         viewport = new_viewport;
         set_aspect_ratio(new_viewport.width/new_viewport.height);
     }
 
-    bool repaint(){
-        if(is_ready()){
+    //    bool repaint(){
+    //        if(is_ready()){
 
-            update_view_projection_matrix();
+    //            update_view_projection_matrix();
 
-            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
-                                                           viewport.origin_y,
-                                                           viewport.width,
-                                                           viewport.height);
+    //            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
+    //                                                           viewport.origin_y,
+    //                                                           viewport.width,
+    //                                                           viewport.height);
 
-            responsible_drawable->program->bind();
-            auto current_model = models.begin();
-            while(current_model != models.end())
-            {
-                current_model->draw();
-                ++current_model;
-            }
+    //            responsible_drawable->program->bind();
+    //            auto current_model = models.begin();
+    //            while(current_model != models.end())
+    //            {
+    //                current_model->draw();
+    //                ++current_model;
+    //            }
 
-            responsible_drawable->program->release();
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    //            responsible_drawable->program->release();
+    //            return true;
+    //        }
+    //        else
+    //        {
+    //            return false;
+    //        }
+    //    }
 
     void set_aspect_ratio(float aspect_ratio)
     {
+        camera_needs_update = true;
         cam_descriptor.aspect_ratio = aspect_ratio;
     }
 
@@ -196,6 +204,7 @@ public:
                            glm::vec3 target,
                            glm::vec3 up_direction)
     {
+        camera_needs_update = true;
         cam_descriptor.camera_location = location;
         cam_descriptor.camera_target = target;
         cam_descriptor.camera_up = up_direction;
@@ -206,6 +215,7 @@ public:
                             float field_of_view,
                             float aspect_ratio)
     {
+        camera_needs_update = true;
         cam_descriptor.frustum_near = frustum_near;
         cam_descriptor.frustum_far = frustum_far;
         cam_descriptor.frustum_field_of_view = field_of_view;
@@ -214,25 +224,40 @@ public:
 
     void set_camera_descriptor(const camera_descriptor &new_cam_descriptor)
     {
+        camera_needs_update = true;
         cam_descriptor = new_cam_descriptor;
     }
 
     void update_view_projection_matrix()
     {
-        responsible_drawable->view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
-                                                                        cam_descriptor.aspect_ratio,
-                                                                        cam_descriptor.frustum_near,
-                                                                        cam_descriptor.frustum_far)
-                * glm::lookAt(cam_descriptor.camera_location,
-                              cam_descriptor.camera_target,
-                              cam_descriptor.camera_up);
+        if(camera_needs_update)
+        {
+            camera_needs_update = false;
+
+            responsible_drawable->view_projection_matrix = glm::perspective(cam_descriptor.frustum_field_of_view,
+                                                                            cam_descriptor.aspect_ratio,
+                                                                            cam_descriptor.frustum_near,
+                                                                            cam_descriptor.frustum_far)
+                    * glm::lookAt(cam_descriptor.camera_location,
+                                  cam_descriptor.camera_target,
+                                  cam_descriptor.camera_up);
+        }
     }
 
     bool use()
     {
-        if(is_ready())
+        if(!camera_in_use && is_ready())
         {
+            camera_in_use = true;
+
             responsible_drawable->program->bind();
+            update_view_projection_matrix();
+
+            responsible_drawable->gl_functions->glViewport(viewport.origin_x,
+                                                           viewport.origin_y,
+                                                           viewport.width,
+                                                           viewport.height);
+
             return true;
         }
         else
@@ -246,6 +271,7 @@ public:
     {
         if(is_ready())
         {
+            camera_in_use = false;
             responsible_drawable->program->release();
             return true;
         }
@@ -289,9 +315,12 @@ private:
         }
     }
 
-    SX_Drawable *responsible_drawable;
+    SX_DrawDevice *responsible_drawable;
 
-    vector<SX_Model> models;
+    bool camera_needs_update = true;
+    bool camera_in_use = false;
+
+    //    vector<SX_Model> models;
     viewport_descriptor viewport;
     camera_descriptor cam_descriptor;
 };

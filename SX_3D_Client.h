@@ -15,6 +15,10 @@ public:
     explicit SX_3D_Client(QWidget *parent = 0);
     ~SX_3D_Client();
 
+protected:
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+
 private:
     Ui::SX_3D_Client *ui;
 };

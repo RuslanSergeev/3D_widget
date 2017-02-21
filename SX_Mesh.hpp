@@ -1,6 +1,7 @@
 #pragma once
 
-#include <SX_Drawable.hpp>
+#include <SX_DrawDevice.hpp>
+#include <SX_Camera.hpp>
 
 #include <QOpenGLTexture>
 #include <QOpenGLFunctions>
@@ -52,20 +53,20 @@ public:
         mesh_buffers_ready
     };
 
-    void draw(/*TODO: const OpenGL_camera &camera*/)
+    void draw(SX_Camera *drawable)
     {
+        set_responsible_drawable(drawable->get_responsible_drawable());
+
         if(!is_ready())
         {
             setup_buffers();
         }
-        else
-        {
-            activate_mesh_textures();
-            VertexArrayObject->bind();
-            responsible_drawable->gl_functions->glDrawElements(responsible_drawable->primitive_type,
-                                                               mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
-            VertexArrayObject->release();
-        }
+        activate_mesh_textures();
+        VertexArrayObject->bind();
+        responsible_drawable->gl_functions->glDrawElements(responsible_drawable->primitive_type,
+                                                           mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
+        VertexArrayObject->release();
+
     }
 
 
@@ -129,7 +130,7 @@ public:
         return VertexArrayObject->objectId();
     }
 
-    bool set_responsible_drawable(SX_Drawable *new_drawable)
+    bool set_responsible_drawable(SX_DrawDevice *new_drawable)
     {
         if(new_drawable)
         {
@@ -168,7 +169,10 @@ private:
             VertexArrayObject->bind();
 
             VertexBufferObject->bind();
-            VertexBufferObject->allocate(mesh_data.points_array.data(), mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor));
+            responsible_drawable->gl_functions->glBufferData(GL_ARRAY_BUFFER,
+                                                             mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor),
+                                                             mesh_data.points_array.data(),
+                                                             GL_STREAM_DRAW);
 
             responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.position_location);
             responsible_drawable->program->enableAttributeArray(responsible_drawable->attributes_locations.color_location);
@@ -197,6 +201,10 @@ private:
 
             ElementBufferObject->bind();
             ElementBufferObject->allocate(mesh_data.indexes_array.data(), mesh_data.indexes_array.size() * sizeof(GLuint));
+            responsible_drawable->gl_functions->glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                                                             mesh_data.indexes_array.size() * sizeof(GLuint),
+                                                             mesh_data.indexes_array.data(),
+                                                             GL_STREAM_DRAW);
 
             VertexArrayObject->release();
             VertexBufferObject->release();
@@ -213,7 +221,7 @@ private:
         ElementBufferObject->destroy();
     }
 
-    SX_Drawable *responsible_drawable;
+    SX_DrawDevice *responsible_drawable;
 
     mesh_status_type status = mesh_buffers_not_ready;
     mesh_data_descriptor mesh_data;

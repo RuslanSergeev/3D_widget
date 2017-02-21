@@ -22,6 +22,9 @@ protected:
     virtual void initializeGL();
     virtual void resizeGL(int __width, int __height);
     virtual void paintGL();
+public:
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
 
 private:
     void init_format();

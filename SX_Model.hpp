@@ -9,24 +9,12 @@
 #include <SX_Camera.hpp>
 #include <SX_Mesh.hpp>
 
-#include <glm/glm.hpp>
-#include <glm/matrix.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+
 
 #include <list>
 using std::list;
 
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-using glm::quat;
-using glm::mat3x3;
-using glm::mat4x4;
+
 
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
@@ -55,6 +43,8 @@ public:
         set_location(vec3(0, 0, 0));
         set_orientation(vec3(0, 0, 0));
         set_scaling(glm::vec3(1.0f));
+
+        child_models.reserve(100);
     }
 
     ~SX_Model()
@@ -84,35 +74,38 @@ public:
      * Камера должна хранить: своё положение, ориентацию, параметры перспективы, примитивы отрисовки
      * и прочие параметры!
     */
-    void draw(/*TODO: const OpenGL_camera &camera*/)
+    void draw(SX_Camera *draw_camera)
     {
         if(!is_ready())
         {
             update_meshes();
             status = model_ready;
         }
-        else
+
+        draw_camera->use();
+        draw_camera->update_view_projection_matrix();
+        set_responsible_drawable(draw_camera->get_responsible_drawable());
+
+        update_model_view_projection_matrix();
+        upload_model_view_projection_matrix();
+        auto current_mesh = meshes.begin();
+        while(current_mesh != meshes.end())
         {
-            update_model_view_projection_matrix();
-            upload_model_view_projection_matrix();
-            auto current_mesh = meshes.begin();
-            while(current_mesh != meshes.end())
-            {
-                current_mesh->draw();
-                ++current_mesh;
-            }
+            current_mesh->draw(draw_camera);
+            ++current_mesh;
+        }
 
-
-            if(has_child_models())
+        if(has_child_models())
+        {
+            auto current_child_model = child_models.begin();
+            while(current_child_model != child_models.end())
             {
-                auto current_child_model = child_models.begin();
-                while(current_child_model != child_models.end())
-                {
-                    current_child_model->draw();
-                    ++current_child_model;
-                }
+                current_child_model->draw(draw_camera);
+                ++current_child_model;
             }
         }
+
+        draw_camera->release();
     }
 
     void rotate_arround_world_point(const vec3 &rotation_origin, const vec3 &axis, const float angle_radians)
@@ -261,7 +254,7 @@ public:
         return parrent_model;
     }
 
-    bool set_responsible_drawable(SX_Drawable *new_drawable)
+    bool set_responsible_drawable(SX_DrawDevice *new_drawable)
     {
         if(new_drawable)
         {
@@ -286,8 +279,8 @@ private:
                                                                glm::value_ptr(model_view_projection_matrix));
     }
 
-    SX_Drawable *responsible_drawable = nullptr;
-    SX_Model *parrent_model = nullptr; //TODO: исключить все указатели. Лучше ввести веерное обновнелие дочерних моделей и мешей.
+    SX_DrawDevice *responsible_drawable = nullptr;
+    SX_Model *parrent_model = nullptr;
 
     mat4x4 model_view_projection_matrix = glm::mat4x4(1.0f);
     mat4x4 model_matrix = glm::mat4x4(1.0f);

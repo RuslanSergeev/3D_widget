@@ -4,7 +4,21 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
+#include <glm/matrix.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+
+using glm::vec2;
+using glm::vec3;
+using glm::vec4;
+using glm::quat;
+using glm::mat3x3;
+using glm::mat4x4;
 
 static const char *position_attribute_name = "vertex_position";
 static const char *color_attribute_name = "vertex_color";
@@ -20,7 +34,7 @@ typedef struct program_location_descriptor_{
     GLint texture_coordinate_location;
 } program_location_descriptor;
 
-class SX_Drawable
+class SX_DrawDevice
 {
 public:
     QOpenGLFunctions *gl_functions = nullptr;

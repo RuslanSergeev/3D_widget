@@ -12,3 +12,15 @@ SX_3D_Client::~SX_3D_Client()
 {
     delete ui;
 }
+
+void SX_3D_Client::keyPressEvent(QKeyEvent *event)
+{
+    ui->widget->keyPressEvent(event);
+//    QWidget::keyPressEvent(event);
+}
+
+void SX_3D_Client::keyReleaseEvent(QKeyEvent *event)
+{
+    ui->widget->keyReleaseEvent(event);
+//    QWidget::keyReleaseEvent(event);
+}
