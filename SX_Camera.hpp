@@ -221,10 +221,10 @@ public:
         {
             camera_needs_update = false;
 
-           view_projection_matrix = glm::perspective(frustum.frustum_field_of_view,
-                                                                            frustum.aspect_ratio,
-                                                                            frustum.frustum_near,
-                                                                            frustum.frustum_far)
+            view_projection_matrix = glm::perspective(frustum.frustum_field_of_view,
+                                                      frustum.aspect_ratio,
+                                                      frustum.frustum_near,
+                                                      frustum.frustum_far)
                     * glm::lookAt(frustum.camera_location,
                                   frustum.camera_target,
                                   frustum.camera_up);
@@ -241,9 +241,9 @@ public:
             update_view_projection_matrix();
 
             camera_renderer.gl_functions->glViewport(viewport.origin_x,
-                                                           viewport.origin_y,
-                                                           viewport.width,
-                                                           viewport.height);
+                                                     viewport.origin_y,
+                                                     viewport.width,
+                                                     viewport.height);
 
             return true;
         }

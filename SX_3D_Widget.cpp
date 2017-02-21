@@ -52,30 +52,25 @@ void SX_3D_Widget::initializeGL()
     sx_model = new SX_Model;
     sx_model->add_mesh(*sx_mesh);
 
-//    sx_model->move_by_self_vector(glm::vec3(-0.5f, 0.0f, -2.0f));
-
-//    sx_model->add_model(*sx_model);
-//    sx_model->move_by_self_vector(glm::vec3(0.5f, 0.0f, 3.0f));
-
     sx_model->set_location(glm::vec3(-1.2f, -1.3f, -0.0f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(0.5f, -0.6f, -0.0f));
+    sx_model->set_location(glm::vec3(0.5f, -0.6f, -6.0f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(-0.5f, 1.2f, -0.0f));
+    sx_model->set_location(glm::vec3(-0.5f, 1.2f, -6.0f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(0.7f, -3.4f, 0.5f));
+    sx_model->set_location(glm::vec3(0.7f, -3.4f, 5.5f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(-0.7f, 2.4f, 0.0f));
+    sx_model->set_location(glm::vec3(-0.7f, 2.4f, -5.0f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(1.5f, -2.0f, 0.0f));
+    sx_model->set_location(glm::vec3(1.5f, -2.0f, 3.0f));
     sx_model->add_model(*sx_model);
 
-    sx_model->set_location(glm::vec3(-1.5f, 2.4f, 0.0f));
+    sx_model->set_location(glm::vec3(-1.5f, 2.4f, -3.0f));
     sx_model->add_model(*sx_model);
 
     sx_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -95,7 +90,7 @@ void SX_3D_Widget::initializeGL()
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->start(1);
+    timer->start(30);
 }
 
 void SX_3D_Widget::resizeGL(int __width, int __height)
@@ -115,10 +110,10 @@ void SX_3D_Widget::paintGL()
     sx_camera->set_camera_params(cam_position, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     wire_camera->set_camera_params(cam_position, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
-    sx_model->get_model(0).rotate_arround_self_point(
-                glm::vec3(-0.25f, -0.25f, 0.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f),
-                0.01f);
+//    sx_model->get_model(0).rotate_arround_self_point(
+//                glm::vec3(-0.25f, -0.25f, 0.0f),
+//                glm::vec3(0.0f, 0.0f, 1.0f),
+//                0.01f);
 
     if(counter < 300)
     {

@@ -19,6 +19,7 @@ using std::list;
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
+#include <assimp/color4.h>
 
 
 class SX_Model{
@@ -47,7 +48,80 @@ public:
 
     ~SX_Model()
     {
-//        clear_buffers();
+        //        clear_buffers();
+    }
+
+
+    void load_mesh(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
+    {
+        for(size_t cur_vertex = 0; cur_vertex < cur_mesh->mNumVertices; ++cur_vertex)
+        {
+
+            //инициализация вектора положения.
+            aiVector3t<float> position = cur_mesh->mVertices[cur_vertex];
+            vec3 new_position(position.x, position.y, position.z);
+
+            //Если имеются нормали, инициализируем их фактическим значением, иначе нулевым.
+            vec3 new_normal(0.0f);
+            if(cur_mesh->HasNormals())
+            {
+                aiVector3t<float> normal = cur_mesh->mNormals[cur_vertex];
+                new_normal = vec3(normal.x, normal.y, normal.z);
+            }
+
+            //Запрашиваем цветовые координаты из нулевого цветового набора.
+            vec4 new_color(1.0f);
+            if(cur_mesh->HasVertexColors(0))
+            {
+                aiColor4D color = cur_mesh->mColors[cur_vertex][0];
+                new_color = vec4(color.r, color.g, color.b, color.a);
+            }
+
+            //Запрашиваем текстурные координаты для нулевого набора текстур.
+            vec2 new_texture_coords(0.0f);
+            if(cur_mesh->HasTextureCoords(0))
+            {
+                aiVector3D texture_coords = cur_mesh->mTextureCoords[cur_vertex][0];
+                new_texture_coords = vec2(texture_coords.x, texture_coords.y);
+            }
+
+            new_mesh->add_point({new_position, new_color, new_normal, new_texture_coords});
+        }
+
+        if(cur_mesh->HasFaces())
+        {
+            for(size_t cur_face = 0; cur_face < cur_mesh->mNumFaces; ++cur_face)
+            {
+                new_mesh->add_index(cur_mesh->mFaces[cur_face].mIndices[0]);
+                new_mesh->add_index(cur_mesh->mFaces[cur_face].mIndices[1]);
+                new_mesh->add_index(cur_mesh->mFaces[cur_face].mIndices[2]);
+            }
+        }
+        else
+        {
+            for(size_t cur_index = 0; cur_index < cur_mesh->mNumVertices; ++cur_index)
+            {
+                new_mesh->add_index(cur_index);
+            }
+        }
+
+    }
+
+    void load_models(const aiScene *scene, aiNode *node, SX_Model *node_model)
+    {
+        for(size_t mesh_index = 0; mesh_index < node->mNumMeshes; ++mesh_index)
+        {
+            SX_Mesh current_mesh;
+            load_mesh(scene, scene->mMeshes[node->mMeshes[mesh_index]], &current_mesh);
+            node_model->add_mesh(current_mesh);
+        }
+
+        for(size_t child_index = 0; child_index < node->mNumChildren; ++child_index)
+        {
+            SX_Model current_child_model;
+            load_models(scene, node->mChildren[child_index], &current_child_model);
+            node_model->add_model(current_child_model);
+        }
     }
 
     bool load_from_file(const char *filename)
@@ -57,8 +131,7 @@ public:
                                                  aiProcess_Triangulate|aiProcess_GenNormals);
         if(scene)
         {
-
-
+            load_models(scene, scene->mRootNode, this);
             return true;
         }
         else
@@ -243,8 +316,8 @@ private:
     void upload_model_view_projection_matrix(SX_Camera *draw_camera)
     {
         draw_camera->camera_renderer.gl_functions->glUniformMatrix4fv(draw_camera->camera_renderer.attributes_locations.model_matrix_location,
-                                                               1, GL_FALSE,
-                                                               glm::value_ptr(model_view_projection_matrix));
+                                                                      1, GL_FALSE,
+                                                                      glm::value_ptr(model_view_projection_matrix));
     }
 
     SX_Model *parrent_model = nullptr;
