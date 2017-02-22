@@ -18,6 +18,6 @@ void main()
 {
 //    gl_FragColor = vec4(fragment_color, 1.0f);
 //    gl_FragColor = texture(texture0, fragment_texture_coordinates) * vec4(fragment_color, 1.0f);
-    gl_FragColor = mix(texture(Difuse_texture, fragment_texture_coordinates), vec4(fragment_color, 1.0f), 0.005f);
+    gl_FragColor = mix(texture(Difuse_texture, fragment_texture_coordinates), vec4(fragment_color, 1.0f), 0.5f);
 //    gl_FragColor = texture(Difuse_texture, fragment_texture_coordinates);
 }

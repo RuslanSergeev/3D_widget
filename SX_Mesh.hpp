@@ -65,6 +65,7 @@ public:
         draw_camera->camera_renderer.gl_functions->glDrawElements(draw_camera->camera_renderer.primitive_type,
                                                            mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
         VertexArrayObject->release();
+        deactivate_mesh_textures(draw_camera);
 
     }
 
@@ -97,17 +98,26 @@ public:
     void activate_mesh_textures(SX_Camera *draw_camera){
         auto current_texture = mesh_data.textures_array.begin();
         auto current_sampler = mesh_data.sampler_names.begin();
-        GLuint texture_number  = 0;
+        GLuint texture_index  = 0;
 
         while(current_texture != mesh_data.textures_array.end())
         {
-            draw_camera->camera_renderer.gl_functions->glActiveTexture(GL_TEXTURE0 + texture_number);
-            draw_camera->camera_renderer.program->setUniformValue(*current_sampler, texture_number);
-            (*current_texture)->bind();
+            draw_camera->camera_renderer.program->setUniformValue(*current_sampler, texture_index);
+            draw_camera->camera_renderer.gl_functions->glActiveTexture(GL_TEXTURE0 + texture_index);
+            draw_camera->camera_renderer.gl_functions->glBindTexture(GL_TEXTURE_2D, (*current_texture)->textureId());
 
             ++current_texture;
             ++current_sampler;
-            ++texture_number;
+            ++texture_index;
+        }
+    }
+
+    void deactivate_mesh_textures(SX_Camera *draw_camera)
+    {
+        for(size_t texture_index = 0; texture_index < mesh_data.textures_array.size(); ++texture_index)
+        {
+            draw_camera->camera_renderer.gl_functions->glActiveTexture(GL_TEXTURE0 + texture_index);
+            draw_camera->camera_renderer.gl_functions->glBindTexture(GL_TEXTURE_2D, 0);
         }
     }
 
