@@ -32,14 +32,22 @@ static const char *normal_attribute_name = "vertex_normal";
 static const char *model_matrix_uniform_name = "model_view_projection_matrix";
 static const char *texture_coordinate_attribute_name = "vertex_texture_coordinates";
 
+static const char *ambient_sampler_name = "Ambient_texture";
+static const char *diffuse_sampler_name = "Difuse_texture";
+static const char *specular_sampler_name = "Specular_texture";
+static const char *normals_sampler_name = "Normals_texture";
 
 
+/*!
+ * @struct program_location_descriptor
+ * @brief адреса аттрибутов и юниформов в шейдерной программе
+*/
 typedef struct program_location_descriptor_{
-    GLint position_location;
-    GLint color_location;
-    GLint normal_location;
-    GLint model_matrix_location;
-    GLint texture_coordinate_location;
+    GLint position_location;                /*! координаты вершины */
+    GLint color_location;                   /*! цвет вершины */
+    GLint normal_location;                  /*! нормаль к полигону в вершине */
+    GLint model_matrix_location;            /*! матрица ориентации модели */
+    GLint texture_coordinate_location;      /*! текстурные координаты вершины */
 } program_location_descriptor;
 
 typedef struct viewport_descriptor_

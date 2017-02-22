@@ -63,7 +63,7 @@ public:
         activate_mesh_textures(draw_camera);
         VertexArrayObject->bind();
         draw_camera->camera_renderer.gl_functions->glDrawElements(draw_camera->camera_renderer.primitive_type,
-                                                           mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
+                                                                  mesh_data.indexes_array.size(), GL_UNSIGNED_INT, 0);
         VertexArrayObject->release();
         deactivate_mesh_textures(draw_camera);
 
@@ -75,13 +75,20 @@ public:
     bool add_texture(const char *texture_filename, const char *sampler_name)
     {
         QOpenGLTexture *new_texture = new QOpenGLTexture(QImage(texture_filename).mirrored());
-        new_texture->create();
-        new_texture->generateMipMaps();
-        new_texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-        new_texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapLinear);
-        new_texture->setWrapMode(QOpenGLTexture::Repeat);
+        if(!new_texture)
+        {
+            return false;
+        }
+        else
+        {
+            new_texture->create();
+            new_texture->generateMipMaps();
+            new_texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+            new_texture->setMagnificationFilter(QOpenGLTexture::LinearMipMapLinear);
+            new_texture->setWrapMode(QOpenGLTexture::Repeat);
 
-        return add_texture(new_texture, sampler_name);
+            return add_texture(new_texture, sampler_name);
+        }
     }
 
     bool add_texture(QOpenGLTexture *new_texture, const char *sampler_name)
@@ -166,9 +173,9 @@ private:
 
             VertexBufferObject->bind();
             draw_camera->camera_renderer.gl_functions->glBufferData(GL_ARRAY_BUFFER,
-                                                             mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor),
-                                                             mesh_data.points_array.data(),
-                                                             GL_STREAM_DRAW);
+                                                                    mesh_data.points_array.size() * sizeof(mesh_vertex_descriptor),
+                                                                    mesh_data.points_array.data(),
+                                                                    GL_STREAM_DRAW);
 
             draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.position_location);
             draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.color_location);
@@ -176,31 +183,31 @@ private:
             draw_camera->camera_renderer.program->enableAttributeArray(draw_camera->camera_renderer.attributes_locations.texture_coordinate_location);
 
             draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.position_location,
-                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                                      sizeof(mesh_vertex_descriptor),
-                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_position));
+                                                                             sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                             sizeof(mesh_vertex_descriptor),
+                                                                             (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_position));
 
             draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.color_location,
-                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                                      sizeof(mesh_vertex_descriptor),
-                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_color));
+                                                                             sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                             sizeof(mesh_vertex_descriptor),
+                                                                             (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_color));
 
             draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.normal_location,
-                                                                      sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                                      sizeof(mesh_vertex_descriptor),
-                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_normal));
+                                                                             sizeof(glm::vec3)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                             sizeof(mesh_vertex_descriptor),
+                                                                             (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_normal));
 
             draw_camera->camera_renderer.gl_functions->glVertexAttribPointer(draw_camera->camera_renderer.attributes_locations.texture_coordinate_location,
-                                                                      sizeof(glm::vec2)/sizeof(float), GL_FLOAT, GL_FALSE,
-                                                                      sizeof(mesh_vertex_descriptor),
-                                                                      (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_texture_coordinates));
+                                                                             sizeof(glm::vec2)/sizeof(float), GL_FLOAT, GL_FALSE,
+                                                                             sizeof(mesh_vertex_descriptor),
+                                                                             (GLvoid *)offsetof(mesh_vertex_descriptor, vertex_texture_coordinates));
 
             ElementBufferObject->bind();
             ElementBufferObject->allocate(mesh_data.indexes_array.data(), mesh_data.indexes_array.size() * sizeof(GLuint));
             draw_camera->camera_renderer.gl_functions->glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                                                             mesh_data.indexes_array.size() * sizeof(GLuint),
-                                                             mesh_data.indexes_array.data(),
-                                                             GL_STREAM_DRAW);
+                                                                    mesh_data.indexes_array.size() * sizeof(GLuint),
+                                                                    mesh_data.indexes_array.data(),
+                                                                    GL_STREAM_DRAW);
 
             VertexArrayObject->release();
             VertexBufferObject->release();

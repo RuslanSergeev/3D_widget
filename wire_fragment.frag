@@ -10,9 +10,9 @@ in vec2 fragment_texture_coordinates;
  * чтобы класс шейдерной программы смог их акт
 */
 uniform sampler2D Ambient_texture;
-uniform sampler2D Difuse_texture;
+uniform sampler2D Diffuse_texture;
 uniform sampler2D Specular_texture;
-uniform sampler2D Normal_texture;
+uniform sampler2D Normals_texture;
 
 void main()
 {

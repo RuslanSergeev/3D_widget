@@ -12,9 +12,10 @@ TARGET = SX_3D_Widget
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
+SOURCES += \
     SX_3D_Widget.cpp \
-    SX_3D_Client.cpp
+    SX_3D_Client.cpp \
+    main.cpp
 
 HEADERS  += \
     SX_3D_Widget.h \

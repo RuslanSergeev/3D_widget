@@ -3,8 +3,10 @@
 SX_Model *sx_model, *teapot_model;
 SX_Camera *sx_camera, *wire_camera;
 vec3 cam_speed = vec3(0.0f, 0.0f, 0.0f);
-vec3 cam_position = vec3(0.0f, 0.0f, 15.0f);
+vec3 cam_position = vec3(0.0f, 0.0f, 100.0f);
 SX_Mesh *sx_mesh;
+
+int camera_speed_increment = 1;
 
 
 SX_3D_Widget::SX_3D_Widget(QWidget *parent):
@@ -19,7 +21,7 @@ void SX_3D_Widget::initializeGL()
     wire_camera = new SX_Camera(":/shaders/vertex_shader.vert", ":/shaders/wire_fragment.frag", GL_LINES);
 
     sx_mesh = new SX_Mesh;
-    sx_mesh->add_texture(":/textures/container.jpg", "Difuse_texture");
+    sx_mesh->add_texture(":/textures/container.jpg", "Diffuse_texture");
     sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
     sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
@@ -77,11 +79,11 @@ void SX_3D_Widget::initializeGL()
 
 
     teapot_model = new SX_Model;
-    if(!teapot_model->load_from_file("teapot.obj"))
+    if(!teapot_model->load_from_file("omid.obj"))
     {
         qDebug() << "unable to load model!";
     }
-    teapot_model->set_location(glm::vec3(0.0f, -0.2f, 0.0f));
+    teapot_model->set_location(glm::vec3(0.0f, -0.2f, -5.0f));
 
     sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                  glm::vec3(0.0f, 0.0f, 0.0f),
@@ -93,8 +95,8 @@ void SX_3D_Widget::initializeGL()
                                    glm::vec3(0.0f, 1.0f, 0.0f));
 
 
-    sx_camera->set_frustum_params(0.001f, 30.0f, 45.0f, 800.0f/600.0f);
-    wire_camera->set_frustum_params(0.001f, 30.0f, 45.0f, 800.0f/600.0f);
+    sx_camera->set_frustum_params(0.001f, 200.0f, 45.0f, 800.0f/600.0f);
+    wire_camera->set_frustum_params(0.001f, 200.0f, 45.0f, 800.0f/600.0f);
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -118,20 +120,20 @@ void SX_3D_Widget::paintGL()
     sx_camera->set_camera_params(cam_position, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     wire_camera->set_camera_params(cam_position, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
-//    sx_model->get_model(0).rotate_arround_self_point(
-//                glm::vec3(-0.25f, -0.25f, 0.0f),
-//                glm::vec3(0.0f, 0.0f, 1.0f),
-//                0.01f);
+    sx_model->get_model(0).rotate_arround_self_point(
+                glm::vec3(-0.25f, -0.25f, 0.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f),
+                0.01f);
 
-    if(counter < 300)
-    {
+//    if(counter < 300)
+//    {
         sx_model->draw(sx_camera);
         teapot_model->draw(sx_camera);
-    }
-    else{
-        sx_model->draw(wire_camera);
-        teapot_model->draw(wire_camera);
-    }
+//    }
+//    else{
+//        sx_model->draw(wire_camera);
+//        teapot_model->draw(wire_camera);
+//    }
 }
 
 
@@ -156,19 +158,19 @@ void SX_3D_Widget::keyPressEvent(QKeyEvent *event)
     {
     case Qt::Key_Up:
     {
-        cam_speed.z = -1.0e-1;
+        cam_speed.z = -camera_speed_increment;
     }break;
     case Qt::Key_Down:
     {
-        cam_speed.z = 1.0e-1;
+        cam_speed.z = camera_speed_increment;
     }break;
     case Qt::Key_Right:
     {
-        cam_speed.x = 1.0e-1;
+        cam_speed.x = camera_speed_increment;
     }break;
     case Qt::Key_Left:
     {
-        cam_speed.x = -1.0e-1;
+        cam_speed.x = -camera_speed_increment;
     }break;
     }
 

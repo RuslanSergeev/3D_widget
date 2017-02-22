@@ -34,11 +34,7 @@ public:
         model_ready
     };
 
-    /*
-     *  TODO: примитив не должен храниться в модели - это скорее параметр камеры,
-     *  чтобы была возможность отрисовки одной модели несколькими примитивами,
-     *  которые хранятся в камерах!
-     */
+
     SX_Model()
     {
         set_location(vec3(0, 0, 0));
@@ -51,10 +47,8 @@ public:
         //        clear_buffers();
     }
 
-
-    void load_mesh(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
+    void load_vertices(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
     {
-        //Загружаем вертексный буфер.
         for(size_t cur_vertex = 0; cur_vertex < cur_mesh->mNumVertices; ++cur_vertex)
         {
 
@@ -71,7 +65,7 @@ public:
             }
 
             //Запрашиваем цвет вершины из нулевого цветового набора.
-            vec4 new_color = glm::vec4(glm::sphericalRand(1.0f), 1.0f);
+            vec4 new_color = glm::vec4(glm::vec3(0.0f, 0.5f, 0.5f) + glm::sphericalRand(0.2f), 1.0f);
             if(cur_mesh->HasVertexColors(0))
             {
                 aiColor4D color = cur_mesh->mColors[cur_vertex][0];
@@ -80,17 +74,19 @@ public:
 
             //Запрашиваем текстурные координаты для нулевого набора текстур.
             vec2 new_texture_coords = glm::circularRand(1.0f);
-            if(cur_mesh->HasTextureCoords(0))
+            int diffuse_coords_index = 0;//get_uv_coords_index(scene, cur_mesh, aiTextureType_DIFFUSE);
+            if(cur_mesh->HasTextureCoords(diffuse_coords_index))
             {
-                aiVector3D texture_coords = cur_mesh->mTextureCoords[cur_vertex][0];
+                aiVector3D texture_coords = cur_mesh->mTextureCoords[diffuse_coords_index][cur_vertex];
                 new_texture_coords = vec2(texture_coords.x, texture_coords.y);
             }
 
             new_mesh->add_point({new_position, new_color, new_normal, new_texture_coords});
         }
+    }
 
-
-        //Загружаем индексный буфер
+    void load_indices(aiMesh *cur_mesh, SX_Mesh *new_mesh)
+    {
         if(cur_mesh->HasFaces())
         {
             for(size_t cur_face = 0; cur_face < cur_mesh->mNumFaces; ++cur_face)
@@ -107,7 +103,67 @@ public:
                 new_mesh->add_index(cur_index);
             }
         }
+    }
 
+
+    /*!
+     * @brief получить индекс текстурных координат для данного типа текстур в данном материале.
+     * @param scene - сцена, которой пренадлежит меш.
+     * @param mesh - меш, для которого запрашивается индекс текстурных координат.
+     * @param type тип материала (aiTextureType_AMBIENT, aiTextureType_DIFFUSE ...)
+    */
+    unsigned int get_uv_coords_index(const aiScene *scene, aiMesh *mesh, aiTextureType type)
+    {
+        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+
+        unsigned int uv_index = 0;
+        material->GetTexture(type, 0, NULL, NULL, &uv_index);
+        return uv_index;
+    }
+
+
+    void load_textures(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
+    {
+        const size_t material_index = cur_mesh->mMaterialIndex;
+        const aiMaterial *material = scene->mMaterials[material_index];
+        aiString texture_path;
+
+        if(material->GetTextureCount(aiTextureType_AMBIENT) > 0)
+        {
+            material->GetTexture(aiTextureType_AMBIENT, 0, &texture_path);
+            new_mesh->add_texture(texture_path.C_Str(), ambient_sampler_name);
+        }
+        if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+        {
+            material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path);
+            new_mesh->add_texture(texture_path.C_Str(), diffuse_sampler_name);
+        }
+        else
+        {
+            new_mesh->add_texture(":/textures/container.jpg", diffuse_sampler_name);
+        }
+        if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+        {
+            material->GetTexture(aiTextureType_SPECULAR, 0, &texture_path);
+            new_mesh->add_texture(texture_path.C_Str(), specular_sampler_name);
+        }
+        if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
+        {
+            material->GetTexture(aiTextureType_NORMALS, 0, &texture_path);
+            new_mesh->add_texture(texture_path.C_Str(), normals_sampler_name);
+        }
+    }
+
+    void load_mesh(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
+    {
+        //Загружаем вертексный буфер
+        load_vertices(scene, cur_mesh, new_mesh);
+
+        //Загружаем индексный буфер
+        load_indices(cur_mesh, new_mesh);
+
+        //Загружаем текстуры модели
+        load_textures(scene, cur_mesh, new_mesh);
     }
 
     void load_models(const aiScene *scene, aiNode *node, SX_Model *node_model)
@@ -131,14 +187,24 @@ public:
     {
 
         /*  Открытие файла модели при помощи QFile
-         *  для поддержки файлов ресурсов Qt         */
-        QFile model_file(filename);
-        model_file.open(QIODevice::ReadOnly);
-        QByteArray model_buffer = model_file.readAll();
+         *  для поддержки файлов ресурсов Qt реализовать
+         *  пока не удалось ввиду странностей в поведении ReadFileFromMemory
+         *  в зависимости от типа модели, она требует разные размеры буфера
+         *  size, либо size-1
+         */
 
+        /*QFile model_file(filename);
+        if(!model_file.open(QIODevice::ReadOnly))
+        {
+            return false;
+        }
+        QByteArray model_buffer = model_file.readAll();
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFileFromMemory(model_buffer.data(), model_buffer.size()-1,
-                                                           aiProcess_Triangulate|aiProcess_GenNormals);
+                                                           aiProcess_Triangulate|aiProcess_GenNormals);*/
+
+        Assimp::Importer importer;
+        const aiScene *scene = importer.ReadFile(filename,aiProcess_Triangulate|aiProcess_GenNormals);
         if(scene)
         {
             load_models(scene, scene->mRootNode, this);
@@ -332,7 +398,6 @@ private:
     vec3 scaling = glm::vec3(1.0f, 1.0f, 1.0f);
 
     model_status_type status = model_not_ready;
-
 
     list<SX_Mesh> meshes;
     vector<SX_Model> child_models;
