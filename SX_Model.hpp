@@ -54,6 +54,7 @@ public:
 
     void load_mesh(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)
     {
+        //Загружаем вертексный буфер.
         for(size_t cur_vertex = 0; cur_vertex < cur_mesh->mNumVertices; ++cur_vertex)
         {
 
@@ -62,15 +63,15 @@ public:
             vec3 new_position(position.x, position.y, position.z);
 
             //Если имеются нормали, инициализируем их фактическим значением, иначе нулевым.
-            vec3 new_normal(0.0f);
+            vec3 new_normal = glm::sphericalRand(1.0f);
             if(cur_mesh->HasNormals())
             {
                 aiVector3t<float> normal = cur_mesh->mNormals[cur_vertex];
                 new_normal = vec3(normal.x, normal.y, normal.z);
             }
 
-            //Запрашиваем цветовые координаты из нулевого цветового набора.
-            vec4 new_color(1.0f);
+            //Запрашиваем цвет вершины из нулевого цветового набора.
+            vec4 new_color = glm::vec4(glm::sphericalRand(1.0f), 1.0f);
             if(cur_mesh->HasVertexColors(0))
             {
                 aiColor4D color = cur_mesh->mColors[cur_vertex][0];
@@ -78,7 +79,7 @@ public:
             }
 
             //Запрашиваем текстурные координаты для нулевого набора текстур.
-            vec2 new_texture_coords(0.0f);
+            vec2 new_texture_coords = glm::circularRand(1.0f);
             if(cur_mesh->HasTextureCoords(0))
             {
                 aiVector3D texture_coords = cur_mesh->mTextureCoords[cur_vertex][0];
@@ -88,6 +89,8 @@ public:
             new_mesh->add_point({new_position, new_color, new_normal, new_texture_coords});
         }
 
+
+        //Загружаем индексный буфер
         if(cur_mesh->HasFaces())
         {
             for(size_t cur_face = 0; cur_face < cur_mesh->mNumFaces; ++cur_face)
@@ -126,9 +129,16 @@ public:
 
     bool load_from_file(const char *filename)
     {
+
+        /*  Открытие файла модели при помощи QFile
+         *  для поддержки файлов ресурсов Qt         */
+        QFile model_file(filename);
+        model_file.open(QIODevice::ReadOnly);
+        QByteArray model_buffer = model_file.readAll();
+
         Assimp::Importer importer;
-        const aiScene *scene = importer.ReadFile(filename,
-                                                 aiProcess_Triangulate|aiProcess_GenNormals);
+        const aiScene *scene = importer.ReadFileFromMemory(model_buffer.data(), model_buffer.size()-1,
+                                                           aiProcess_Triangulate|aiProcess_GenNormals);
         if(scene)
         {
             load_models(scene, scene->mRootNode, this);
@@ -140,11 +150,6 @@ public:
         }
     }
 
-    /*
-     * TODO: должен принимать камеру, с помощью которой будет производиться отрисовка.
-     * Камера должна хранить: своё положение, ориентацию, параметры перспективы, примитивы отрисовки
-     * и прочие параметры!
-    */
     void draw(SX_Camera *draw_camera)
     {
         draw_camera->use();

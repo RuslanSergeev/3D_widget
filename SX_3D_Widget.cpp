@@ -1,6 +1,6 @@
 #include "SX_3D_Widget.h"
 
-SX_Model *sx_model;
+SX_Model *sx_model, *teapot_model;
 SX_Camera *sx_camera, *wire_camera;
 vec3 cam_speed = vec3(0.0f, 0.0f, 0.0f);
 vec3 cam_position = vec3(0.0f, 0.0f, 15.0f);
@@ -75,6 +75,14 @@ void SX_3D_Widget::initializeGL()
 
     sx_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
 
+
+    teapot_model = new SX_Model;
+    if(!teapot_model->load_from_file("teapot.obj"))
+    {
+        qDebug() << "unable to load model!";
+    }
+    teapot_model->set_location(glm::vec3(0.0f, -0.2f, 0.0f));
+
     sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                  glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
@@ -118,9 +126,11 @@ void SX_3D_Widget::paintGL()
     if(counter < 300)
     {
         sx_model->draw(sx_camera);
+        teapot_model->draw(sx_camera);
     }
     else{
         sx_model->draw(wire_camera);
+        teapot_model->draw(wire_camera);
     }
 }
 

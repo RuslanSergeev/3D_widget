@@ -18,8 +18,16 @@ int main(int argc, char *argv[])
     client.show();
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile("teapot.obj",
-                                             aiProcess_Triangulate|aiProcess_GenNormals);
+//    const aiScene *scene = importer.ReadFile("teapot.obj",
+//                                             aiProcess_Triangulate|aiProcess_GenNormals);
+
+
+    QFile model_file("teapot.obj");
+    model_file.open(QIODevice::ReadOnly);
+    QByteArray model_buffer = model_file.readAll();
+    const aiScene *scene = importer.ReadFileFromMemory(model_buffer.data(), model_buffer.size()-1,
+                                                       aiProcess_Triangulate|aiProcess_GenNormals);
+
     if(!scene)
     {
         qDebug() << "cannot read model";
