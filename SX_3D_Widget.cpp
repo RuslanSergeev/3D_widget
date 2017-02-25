@@ -83,7 +83,7 @@ void SX_3D_Widget::initializeGL()
     {
         qDebug() << "unable to load model!";
     }
-    teapot_model->set_location(glm::vec3(0.0f, -0.2f, -5.0f));
+    teapot_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
 
     sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                  glm::vec3(0.0f, 0.0f, 0.0f),

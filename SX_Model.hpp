@@ -74,7 +74,7 @@ public:
 
             //Запрашиваем текстурные координаты для нулевого набора текстур.
             vec2 new_texture_coords = glm::circularRand(1.0f);
-            int diffuse_coords_index = 0;//get_uv_coords_index(scene, cur_mesh, aiTextureType_DIFFUSE);
+            int diffuse_coords_index = get_uv_coords_index(scene, cur_mesh, aiTextureType_DIFFUSE);
             if(cur_mesh->HasTextureCoords(diffuse_coords_index))
             {
                 aiVector3D texture_coords = cur_mesh->mTextureCoords[diffuse_coords_index][cur_vertex];
@@ -117,7 +117,8 @@ public:
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
         unsigned int uv_index = 0;
-        material->GetTexture(type, 0, NULL, NULL, &uv_index);
+        aiString unused_path;
+        material->GetTexture(type, 0, &unused_path, NULL, &uv_index);
         return uv_index;
     }
 
