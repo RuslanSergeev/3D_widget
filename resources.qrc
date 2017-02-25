@@ -8,6 +8,7 @@
         <file>container.jpg</file>
         <file>Bdot.jpg</file>
         <file>skybox.jpg</file>
+        <file>no_texture.jpg</file>
     </qresource>
     <qresource prefix="/models">
         <file>teapot.obj</file>

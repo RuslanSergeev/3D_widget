@@ -1,6 +1,6 @@
 #include "SX_3D_Widget.h"
 
-SX_Model *sx_model, *teapot_model;
+SX_Model *sx_model, *teapot_model, *skybox_model;
 SX_Camera *sx_camera, *wire_camera;
 vec3 cam_speed = vec3(0.0f, 0.0f, 0.0f);
 vec3 cam_position = vec3(0.0f, 0.0f, 100.0f);
@@ -22,22 +22,22 @@ void SX_3D_Widget::initializeGL()
 
     sx_mesh = new SX_Mesh;
     sx_mesh->add_texture(":/textures/container.jpg", "Diffuse_texture");
-    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.0f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 1.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 0.0f)});
-    sx_mesh->add_point({glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(1.0f, 1.0f)});
+    sx_mesh->add_point(glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f), glm::vec2(0.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f,-0.25f, 0.25f), glm::vec3(0.0f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 1.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f,-0.25f,-0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(0.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f,-0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 0.0f));
+    sx_mesh->add_point(glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 1.0f));
     sx_mesh->add_index(0);sx_mesh->add_index(2);sx_mesh->add_index(3);
     sx_mesh->add_index(0);sx_mesh->add_index(1);sx_mesh->add_index(2);
     sx_mesh->add_index(2);sx_mesh->add_index(6);sx_mesh->add_index(3);
@@ -85,6 +85,14 @@ void SX_3D_Widget::initializeGL()
     }
     teapot_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
 
+
+    skybox_model = new SX_Model;
+    if(!skybox_model->load_from_file("toyplane.obj"))
+    {
+        qDebug() << "unable to load skybox model!";
+    }
+    skybox_model->set_location(glm::vec3(0.0f, 0.0f, 0.0f));
+
     sx_camera->set_camera_params(glm::vec3(0.0f, 0.0f, 15.0f),
                                  glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
@@ -125,15 +133,17 @@ void SX_3D_Widget::paintGL()
                 glm::vec3(0.0f, 0.0f, 1.0f),
                 0.01f);
 
-//    if(counter < 300)
-//    {
+    if(counter < 500)
+    {
+        skybox_model->draw(sx_camera);
         sx_model->draw(sx_camera);
         teapot_model->draw(sx_camera);
-//    }
-//    else{
-//        sx_model->draw(wire_camera);
-//        teapot_model->draw(wire_camera);
-//    }
+    }
+    else{
+        skybox_model->draw(wire_camera);
+        sx_model->draw(wire_camera);
+        teapot_model->draw(wire_camera);
+    }
 }
 
 

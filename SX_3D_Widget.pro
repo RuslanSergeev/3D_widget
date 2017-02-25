@@ -15,7 +15,8 @@ TEMPLATE = app
 SOURCES += \
     SX_3D_Widget.cpp \
     SX_3D_Client.cpp \
-    main.cpp
+    main.cpp \
+    SX_Mesh.cpp
 
 HEADERS  += \
     SX_3D_Widget.h \

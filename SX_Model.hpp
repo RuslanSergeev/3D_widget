@@ -73,15 +73,48 @@ public:
             }
 
             //Запрашиваем текстурные координаты для нулевого набора текстур.
-            vec2 new_texture_coords = glm::circularRand(1.0f);
+            vec2 new_ambient_coords = glm::circularRand(1.0f);
+            int ambient_coords_index = get_uv_coords_index(scene, cur_mesh, aiTextureType_AMBIENT);
+            if(cur_mesh->HasTextureCoords(ambient_coords_index))
+            {
+                aiVector3D texture_coords = cur_mesh->mTextureCoords[ambient_coords_index][cur_vertex];
+                new_ambient_coords = vec2(texture_coords.x, texture_coords.y);
+            }
+
+            //определяем диффузные координаты вертекса, если таковые имеются
+            vec2 new_diffuse_coords = glm::circularRand(1.0f);
             int diffuse_coords_index = get_uv_coords_index(scene, cur_mesh, aiTextureType_DIFFUSE);
             if(cur_mesh->HasTextureCoords(diffuse_coords_index))
             {
                 aiVector3D texture_coords = cur_mesh->mTextureCoords[diffuse_coords_index][cur_vertex];
-                new_texture_coords = vec2(texture_coords.x, texture_coords.y);
+                new_diffuse_coords = vec2(texture_coords.x, texture_coords.y);
             }
 
-            new_mesh->add_point({new_position, new_color, new_normal, new_texture_coords});
+            //определяем "глянцевые" координаты вертекса, если таковые имеются
+            vec2 new_specular_coords = glm::circularRand(1.0f);
+            int specular_coords_index = get_uv_coords_index(scene, cur_mesh, aiTextureType_SPECULAR);
+            if(cur_mesh->HasTextureCoords(specular_coords_index))
+            {
+                aiVector3D texture_coords = cur_mesh->mTextureCoords[specular_coords_index][cur_vertex];
+                new_specular_coords = vec2(texture_coords.x, texture_coords.y);
+            }
+
+            //определяем координаты вертекса на карте нормалей, если таковые имеются
+            vec2 new_normals_coords = glm::circularRand(1.0f);
+            int normals_coords_index = get_uv_coords_index(scene, cur_mesh, aiTextureType_NORMALS);
+            if(cur_mesh->HasTextureCoords(normals_coords_index))
+            {
+                aiVector3D texture_coords = cur_mesh->mTextureCoords[normals_coords_index][cur_vertex];
+                new_normals_coords = vec2(texture_coords.x, texture_coords.y);
+            }
+
+            new_mesh->add_point(new_position,
+                                new_color,
+                                new_normal,
+                                new_ambient_coords,
+                                new_diffuse_coords,
+                                new_specular_coords,
+                                new_normals_coords);
         }
     }
 
@@ -141,7 +174,7 @@ public:
         }
         else
         {
-            new_mesh->add_texture(":/textures/container.jpg", diffuse_sampler_name);
+            new_mesh->add_texture(default_diffuse_texture_path,diffuse_sampler_name);
         }
         if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
         {

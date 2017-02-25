@@ -2,7 +2,12 @@
 
 in vec3 fragment_color;
 in vec3 fragment_normal;
-in vec2 fragment_texture_coordinates;
+
+//Fragment texture attributes
+in vec2 fragment_Ambient_texture_coordoutates;
+in vec2 fragment_Diffuse_texture_coordoutates;
+in vec2 fragment_Specular_texture_coordoutates;
+in vec2 fragment_Normals_texture_coordoutates;
 
 
 /*

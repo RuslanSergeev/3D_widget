@@ -30,12 +30,18 @@ static const char *position_attribute_name = "vertex_position";
 static const char *color_attribute_name = "vertex_color";
 static const char *normal_attribute_name = "vertex_normal";
 static const char *model_matrix_uniform_name = "model_view_projection_matrix";
-static const char *texture_coordinate_attribute_name = "vertex_texture_coordinates";
+
+static const char *Ambient_texture_coordinates_name = "vertex_Ambient_texture_coordinates";
+static const char *Diffuse_texture_coordinates_name = "vertex_Diffuse_texture_coordinates";
+static const char *Specular_texture_coordinates_name = "vertex_Specular_texture_coordinate";
+static const char *Normals_texture_coordinates_name = "vertex_Normals_texture_coordinates";
 
 static const char *ambient_sampler_name = "Ambient_texture";
-static const char *diffuse_sampler_name = "Difuse_texture";
+static const char *diffuse_sampler_name = "Diffuse_texture";
 static const char *specular_sampler_name = "Specular_texture";
 static const char *normals_sampler_name = "Normals_texture";
+
+static const char *default_diffuse_texture_path = ":/textures/no_texture.jpg";
 
 
 /*!
@@ -46,8 +52,13 @@ typedef struct program_location_descriptor_{
     GLint position_location;                /*! координаты вершины */
     GLint color_location;                   /*! цвет вершины */
     GLint normal_location;                  /*! нормаль к полигону в вершине */
+
     GLint model_matrix_location;            /*! матрица ориентации модели */
-    GLint texture_coordinate_location;      /*! текстурные координаты вершины */
+
+    GLint Ambient_texture_coordinate_location;      /*! текстурные координаты вершины */
+    GLint Diffuse_texture_coordinate_location;
+    GLint Specular_texture_coordinate_location;
+    GLint Normals_texture_coordinate_location;
 } program_location_descriptor;
 
 typedef struct viewport_descriptor_
@@ -124,10 +135,7 @@ public:
             qDebug() << "Unable to link shader new_program:";
             qDebug() << new_program->log();
         }
-        else
-        {
-            qDebug() << "shader new_program succesfully linked.";
-        }
+
         new_program->create();
 
         camera_renderer.primitive_type = primitive_type;
@@ -157,6 +165,11 @@ public:
         if(nullptr != camera_renderer.program &&
                 camera_renderer.program->isLinked())
         {
+            /* Сохраняем адреса основных вертексных аттрибутов для последующего быстрого обращения
+             * без необходимости снова выяснять адрес аттрибута. Адреса аттрибутов могут отличаться в
+             * разных шейдерных программах, поэтому дескриптор адресов является компонентом объекта
+             * шейдерной программы.
+            */
             camera_renderer.attributes_locations.color_location =
                     camera_renderer.program->attributeLocation(color_attribute_name);
             camera_renderer.attributes_locations.model_matrix_location =
@@ -165,8 +178,18 @@ public:
                     camera_renderer.program->attributeLocation(normal_attribute_name);
             camera_renderer.attributes_locations.position_location =
                     camera_renderer.program->attributeLocation(position_attribute_name);
-            camera_renderer.attributes_locations.texture_coordinate_location =
-                    camera_renderer.program->attributeLocation(texture_coordinate_attribute_name);
+
+            /* Сохраняем адреса аттрибутов текстурных координат вертексов в шейдерной программе в наш объект
+             * для последующего быстрого обращения.
+            */
+            camera_renderer.attributes_locations.Ambient_texture_coordinate_location =
+                    camera_renderer.program->attributeLocation(Ambient_texture_coordinates_name);
+            camera_renderer.attributes_locations.Diffuse_texture_coordinate_location =
+                    camera_renderer.program->attributeLocation(Diffuse_texture_coordinates_name);
+            camera_renderer.attributes_locations.Specular_texture_coordinate_location =
+                    camera_renderer.program->attributeLocation(Specular_texture_coordinates_name);
+            camera_renderer.attributes_locations.Normals_texture_coordinate_location =
+                    camera_renderer.program->attributeLocation(Normals_texture_coordinates_name);
             return true;
         }
         return false;
