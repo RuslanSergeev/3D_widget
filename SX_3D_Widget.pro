@@ -15,8 +15,7 @@ TEMPLATE = app
 SOURCES += \
     SX_3D_Widget.cpp \
     SX_3D_Client.cpp \
-    main.cpp \
-    SX_Mesh.cpp
+    main.cpp
 
 HEADERS  += \
     SX_3D_Widget.h \
@@ -33,7 +32,17 @@ DISTFILES +=
 RESOURCES += \
     resources.qrc
 
-INCLUDEPATH += $$PWD/../../../../opt/LIBRARYES/glm
-DEPENDPATH += $$PWD/../../../../opt/LIBRARYES/glm
+unix: INCLUDEPATH += $$PWD/../../../../opt/LIBRARYES/glm
+unix: DEPENDPATH += $$PWD/../../../../opt/LIBRARYES/glm
+win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/glm
+
+win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/include
 
 unix:!macx: LIBS += -lassimp
+
+win32: LIBS += -L$$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/ -lassimp
+win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/include/assimp
+win32: DEPENDPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/include/assimp
+
+#win32:!win32-g++: PRE_TARGETDEPS += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/assimp.lib
+#else:win32-g++: PRE_TARGETDEPS += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/libassimp.a

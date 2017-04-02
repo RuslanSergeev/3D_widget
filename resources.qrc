@@ -1,16 +1,16 @@
 <RCC>
     <qresource prefix="/shaders">
-        <file>vertex_shader.vert</file>
-        <file>fragment_shader.frag</file>
-        <file>wire_fragment.frag</file>
+        <file>Resources/shaders/fragment_shader.frag</file>
+        <file>Resources/shaders/vertex_shader.vert</file>
+        <file>Resources/shaders/wire_fragment.frag</file>
     </qresource>
     <qresource prefix="/textures">
-        <file>container.jpg</file>
-        <file>Bdot.jpg</file>
-        <file>skybox.jpg</file>
-        <file>no_texture.jpg</file>
+        <file>Resources/omid_sattelite/BronzeCopper0016_5_S.jpg</file>
+        <file>Resources/omid_sattelite/MetalBase0121_5_M.jpg</file>
+        <file>Resources/container.jpg</file>
+        <file>Resources/no_texture.jpg</file>
     </qresource>
     <qresource prefix="/models">
-        <file>teapot.obj</file>
+        <file>Resources/omid_sattelite/omid.obj</file>
     </qresource>
 </RCC>

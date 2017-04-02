@@ -44,7 +44,6 @@ public:
 
     ~SX_Model()
     {
-        //        clear_buffers();
     }
 
     void load_vertices(const aiScene *scene, aiMesh *cur_mesh, SX_Mesh *new_mesh)

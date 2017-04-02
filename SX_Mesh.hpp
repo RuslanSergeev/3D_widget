@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <SX_DrawDevice.hpp>
 #include <SX_Camera.hpp>
 
 #include <QOpenGLTexture>
