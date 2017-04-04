@@ -22,7 +22,8 @@ using std::list;
 #include <assimp/color4.h>
 
 
-class SX_Model{
+class SX_Model
+{
 public:
 
     /*!

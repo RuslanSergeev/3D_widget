@@ -17,11 +17,15 @@ SX_3D_Widget::SX_3D_Widget(QWidget *parent):
 
 void SX_3D_Widget::initializeGL()
 {
-    sx_camera = new SX_Camera(":/shaders/vertex_shader.vert", ":/shaders/fragment_shader.frag", GL_TRIANGLES);
-    wire_camera = new SX_Camera(":/shaders/vertex_shader.vert", ":/shaders/wire_fragment.frag", GL_LINES);
+//    initializeOpenGLFunctions();
+
+    sx_camera = new SX_Camera(":/shaders/Resources/shaders/vertex_shader.vert",
+                              ":/shaders/Resources/shaders/fragment_shader.frag", GL_TRIANGLES);
+    wire_camera = new SX_Camera(":/shaders/Resources/shaders/vertex_shader.vert",
+                                ":/shaders/Resources/shaders/wire_fragment.frag", GL_LINES);
 
     sx_mesh = new SX_Mesh;
-    sx_mesh->add_texture(":/textures/container.jpg", "Diffuse_texture");
+    sx_mesh->add_texture(":/textures/Resources/container.jpg", "Diffuse_texture");
     sx_mesh->add_point(glm::vec3(-0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.6f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f), glm::vec2(0.0f, 0.0f));
     sx_mesh->add_point(glm::vec3( 0.25f, 0.25f, 0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 0.0f));
     sx_mesh->add_point(glm::vec3( 0.25f, 0.25f,-0.25f), glm::vec3(0.95f, 0.0f,  0.25f), glm::vec3(0.0f, 0.0f, 0.99f), glm::vec2(0.0f),  glm::vec2(1.0f, 1.0f));

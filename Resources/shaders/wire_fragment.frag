@@ -9,6 +9,8 @@ in vec2 fragment_Diffuse_texture_coordoutates;
 in vec2 fragment_Specular_texture_coordoutates;
 in vec2 fragment_Normals_texture_coordoutates;
 
+out vec4 out_fragment_color;
+
 
 /*
  * Все семплеры фрагментного шейдера должны иметь специализированные имена,
@@ -21,5 +23,5 @@ uniform sampler2D Normals_texture;
 
 void main()
 {
-    gl_FragColor = vec4(fragment_color, 1.0f);
+    out_fragment_color = vec4(fragment_color, 1.0f);
 }

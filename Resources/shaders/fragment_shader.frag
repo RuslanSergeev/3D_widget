@@ -9,6 +9,8 @@ in vec2 fragment_Diffuse_texture_coordoutates;
 in vec2 fragment_Specular_texture_coordoutates;
 in vec2 fragment_Normals_texture_coordoutates;
 
+out vec4 out_fragment_color;
+
 /*
  * Все семплеры фрагментного шейдера должны иметь специализированные имена,
  * чтобы класс шейдерной программы смог их активировать.
@@ -22,6 +24,6 @@ void main()
 {
 //    gl_FragColor = vec4(fragment_color, 1.0f);
 //    gl_FragColor = texture(texture0, fragment_texture_coordinates) * vec4(fragment_color, 1.0f);
-    gl_FragColor = mix(texture(Diffuse_texture, fragment_Diffuse_texture_coordoutates), vec4(fragment_color, 1.0f), 0.1f);
+    out_fragment_color = mix(texture(Diffuse_texture, fragment_Diffuse_texture_coordoutates), vec4(fragment_color, 1.0f), 0.1f);
 //    gl_FragColor = texture(Difuse_texture, fragment_texture_coordinates);
 }

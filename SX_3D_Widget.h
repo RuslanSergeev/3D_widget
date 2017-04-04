@@ -12,7 +12,7 @@
 #include <SX_Camera.hpp>
 #include <SX_Model.hpp>
 
-class SX_3D_Widget : public QOpenGLWidget
+class SX_3D_Widget : public QOpenGLWidget, public QOpenGLFunctions
 {
     Q_OBJECT
 public:

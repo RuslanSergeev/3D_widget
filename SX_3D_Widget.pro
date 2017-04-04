@@ -20,9 +20,9 @@ SOURCES += \
 HEADERS  += \
     SX_3D_Widget.h \
     SX_3D_Client.h \
-    SX_Model.hpp \
     SX_Camera.hpp \
-    SX_Mesh.hpp
+    SX_Mesh.hpp \
+    SX_Model.hpp
 
 FORMS    += \
     SX_3D_Client.ui
@@ -34,15 +34,13 @@ RESOURCES += \
 
 unix: INCLUDEPATH += $$PWD/../../../../opt/LIBRARYES/glm
 unix: DEPENDPATH += $$PWD/../../../../opt/LIBRARYES/glm
-win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/glm
-
-win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/include
-
+unix: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/include
+unix: DEPENDPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/include
 unix:!macx: LIBS += -lassimp
 
-win32: LIBS += -L$$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/ -lassimp
-win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/include/assimp
-win32: DEPENDPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/include/assimp
+win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/glm
+win32: INCLUDEPATH += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/include
+win32: LIBS += -lopengl32
+win32: LIBS += -L$$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/code/ -llibassimp.dll
 
-#win32:!win32-g++: PRE_TARGETDEPS += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/assimp.lib
-#else:win32-g++: PRE_TARGETDEPS += $$PWD/../../../LIBRARYES/Assimp/assimp-3.3.1/build/Assimp/lib/x64/libassimp.a
+
